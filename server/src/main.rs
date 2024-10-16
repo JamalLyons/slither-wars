@@ -1,15 +1,18 @@
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::{accept_async, tungstenite::protocol::Message};
 use futures_util::{StreamExt, SinkExt};
 use serde::{Deserialize, Serialize};
 use tracing_subscriber::FmtSubscriber;
 
+mod game;
+
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "PascalCase")]
 enum Action {
     GameInit,
     GameLoad,
+    GameSpawn,
     GameUpdate,
     GameOver,
 }
@@ -27,18 +30,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>
     let addr = "127.0.0.1:9001".to_string();
     let listener = TcpListener::bind(&addr).await.expect("Failed to bind");
 
+    let game = game::GameState::default();
+
     info!("WebSocket server listening on {}", addr);
 
     // Accept incoming TCP connections
     while let Ok((stream, _)) = listener.accept().await {
-        tokio::spawn(handle_connection(stream));
+        tokio::spawn(handle_connection(stream, game.clone()));
     }
 
     Ok(())
 }
 
 // Handle each WebSocket connection
-async fn handle_connection(stream: TcpStream) {
+async fn handle_connection(stream: TcpStream, state: game::GameState) {
     // Accept the WebSocket connection
     let ws_stream = match accept_async(stream).await {
         Ok(stream) => stream,
@@ -75,7 +80,12 @@ async fn handle_connection(stream: TcpStream) {
                                         let response = serde_json::to_vec(&Payload { action: Action::GameLoad }).unwrap();
                                         write.send(Message::Binary(response)).await.unwrap();
                                     },
-                                    Action::GameLoad => {}
+                                    Action::GameSpawn => {
+                                        info!("Game Spawn action received");
+                                    }
+                                    Action::GameLoad => {
+                                        warn!("Game Load action received");
+                                    }
                                     Action::GameUpdate => {
                                         info!("Game Update action received");
                                     }
