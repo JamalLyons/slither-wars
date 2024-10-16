@@ -1,9 +1,23 @@
 use tracing::{error, info};
-use tracing_subscriber::FmtSubscriber;
-
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::{accept_async, tungstenite::protocol::Message};
 use futures_util::{StreamExt, SinkExt};
+use serde::{Deserialize, Serialize};
+use tracing_subscriber::FmtSubscriber;
+
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "PascalCase")]
+enum Action {
+    GameInit,
+    GameLoad,
+    GameUpdate,
+    GameOver,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct Payload {
+    action: Action,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>
@@ -34,7 +48,7 @@ async fn handle_connection(stream: TcpStream) {
         }
     };
 
-    info!("New WebSocket connection established");
+    info!("Connection established");
 
     // Split the WebSocket into a sender and receiver
     let (mut write, mut read) = ws_stream.split();
@@ -43,14 +57,42 @@ async fn handle_connection(stream: TcpStream) {
     while let Some(msg) = read.next().await {
         match msg {
             Ok(Message::Text(text)) => {
-                info!("Received: {}", text);
-                // Echo the message back
-                write.send(Message::Text(text)).await.expect("Failed to send message");
+                info!("Received: {:?}", text);
             }
             Ok(Message::Binary(bin)) => {
-                info!("Received: {:?}", bin);
-                // Echo the message back
-                write.send(Message::Binary(bin)).await.expect("Failed to send message");
+                // Convert the binary data back to a string
+                match String::from_utf8(bin) {
+                    Ok(json_string) => {
+                        // Attempt to deserialize the JSON string into the Payload struct
+                        match serde_json::from_str::<Payload>(&json_string) {
+                            Ok(payload) => {
+                                //? do something with the actions
+                                match payload.action {
+                                    Action::GameInit => {
+                                        info!("Game Init action received");
+                                        
+                                        // Send a response back to the client
+                                        let response = serde_json::to_vec(&Payload { action: Action::GameLoad }).unwrap();
+                                        write.send(Message::Binary(response)).await.unwrap();
+                                    },
+                                    Action::GameLoad => {}
+                                    Action::GameUpdate => {
+                                        info!("Game Update action received");
+                                    }
+                                    Action::GameOver => {
+                                        info!("Game Over action received");
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                error!("Failed to deserialize JSON: {}", e);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        error!("Failed to convert binary to string: {}", e);
+                    }
+                }
             }
             Ok(Message::Ping(_)) => {
                 info!("Ping received");
@@ -60,6 +102,10 @@ async fn handle_connection(stream: TcpStream) {
             }
             Ok(Message::Close(_)) => {
                 info!("Connection closed");
+                break;
+            }
+            Err(e) => {
+                error!("Error (read.next): {}", e);
                 break;
             }
             _ => (),
