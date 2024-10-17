@@ -6,7 +6,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::mpsc;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::{accept_async, WebSocketStream};
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
 use crate::constants::Rgb;
@@ -39,8 +39,11 @@ pub async fn start_websocket_server(game_world: GameWorld, client_list: ClientLi
 type Writter = SplitSink<WebSocketStream<TcpStream>, Message>;
 type Reader = SplitStream<WebSocketStream<TcpStream>>;
 
-async fn handle_connection(stream: tokio::net::TcpStream, mut game_world: GameWorld, client_list: ClientList) -> Result<()>
-{
+async fn handle_connection(
+    stream: TcpStream,
+    mut game_world: GameWorld,
+    client_list: ClientList,
+) -> Result<()> {
     let ws_stream = accept_async(stream).await?;
     let (write, mut read) = ws_stream.split();
 
@@ -52,6 +55,9 @@ async fn handle_connection(stream: tokio::net::TcpStream, mut game_world: GameWo
         let mut clients = client_list.lock().unwrap();
         clients.push(tx.clone());
     }
+
+    // **NEW**: Initialize player_id as None
+    let mut player_id: Option<Uuid> = None;
 
     // Spawn a task to forward messages from rx to write
     tokio::spawn(async move {
@@ -67,21 +73,46 @@ async fn handle_connection(stream: tokio::net::TcpStream, mut game_world: GameWo
     // Process incoming messages
     while let Some(msg) = read.next().await {
         let msg = msg?;
-
+    
         // Ignore non-text messages
         if !msg.is_text() {
             continue;
         }
-
+    
         let packet: WsClientPacket = serde_json::from_str(&msg.to_string())?;
-
-        handle_client_packet(&mut game_world, tx.clone(), client_list.clone(), packet).await?;
+    
+        handle_client_packet(
+            &mut game_world,
+            tx.clone(),
+            client_list.clone(),
+            packet,
+            &mut player_id, // Pass mutable reference
+        )
+        .await?;
     }
 
+    // After the read loop ends (client disconnects)
     // Remove the sender from the client list upon disconnection
     {
         let mut clients = client_list.lock().unwrap();
         clients.retain(|client_tx| !client_tx.same_channel(&tx));
+    }
+
+    // Broadcast PlayerLeft event if player_id is known
+    if let Some(id) = player_id {
+        // Remove the player from the game world
+        game_world.remove_snake(id);
+
+        // Broadcast the PlayerLeft event
+        broadcast_message(
+            &client_list,
+            ServerMessage::PlayerLeft,
+            serde_json::json!({ "id": id }),
+        )?;
+
+        debug!("Removed player {} from the game", id);
+    } else {
+        warn!("No player ID found for disconnected client");
     }
 
     Ok(())
@@ -92,12 +123,12 @@ async fn handle_client_packet(
     tx: Tx,
     client_list: ClientList,
     packet: WsClientPacket,
-) -> Result<()>
-{
+    player_id: &mut Option<Uuid>,
+) -> Result<()> {
     match packet.message {
         ClientMessage::JoinGame => {
             let name = packet.data.to_string();
-
+    
             let snake = Snake::new(
                 Uuid::new_v4(),
                 name.clone(),
@@ -105,19 +136,32 @@ async fn handle_client_packet(
                 false,
                 create_random_position(),
             );
-
+    
+            // Update player_id via mutable reference
+            // This way we can track the player's ID in the client list
+            *player_id = Some(snake.id);
+    
             game_world.add_snake(snake.clone());
-
+    
             debug!("Added new player {} to the game", name);
-
+    
+            tx.send(Message::Text(
+                serde_json::to_string(&WsServerPacket {
+                    message: ServerMessage::PlayerInit,
+                    data: serde_json::json!(snake),
+                })?,
+            ))?;
+    
             broadcast_message(
                 &client_list,
                 ServerMessage::PlayerJoined,
                 serde_json::json!(snake),
             )?;
         }
+        // Handle other messages...
         _ => {}
     }
+
     Ok(())
 }
 

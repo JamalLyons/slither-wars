@@ -33,13 +33,17 @@ pub struct WsServerPacket
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ServerMessage
 {
+    /// Event triggered when a new player joins.
+    /// This data is sent directly to the client. We need to let the client know 
+    /// which player it is before we can manage all players.
+    PlayerInit,
     /// Event triggered when a new player joins the game. (Used to alert other players of new player)
     PlayerJoined,
     /// Event triggered when a player disconnects from the game. (Used to alert other players of disconnect)
     PlayerLeft,
     /// Event triggered when a player moves
     PlayerMoved,
-    
+
     IncreasePlayerLength,
     DecreasePlayerLength,
 

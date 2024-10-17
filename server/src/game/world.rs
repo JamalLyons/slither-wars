@@ -46,8 +46,16 @@ impl GameWorld
 
     pub fn add_snake(&mut self, snake: Snake)
     {
-        self.snakes.lock().unwrap().insert(snake.id, snake);
-        self.total_snakes = self.snakes.lock().unwrap().len() as u32;
+        let mut snakes = self.snakes.lock().unwrap();
+        snakes.insert(snake.id, snake);
+        self.total_snakes = snakes.len() as u32;
+    }
+
+    pub fn remove_snake(&mut self, id: Uuid)
+    {
+        let mut snakes = self.snakes.lock().unwrap();
+        snakes.remove(&id);
+        self.total_snakes = snakes.len() as u32;
     }
 
     fn spawn_food(&mut self, amount: u32)
