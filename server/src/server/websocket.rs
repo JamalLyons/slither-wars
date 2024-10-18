@@ -1,11 +1,10 @@
 use anyhow::Result;
-use futures::stream::{SplitSink, SplitStream};
 use futures::SinkExt;
 use futures_util::StreamExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::mpsc;
+use tokio_tungstenite::accept_async;
 use tokio_tungstenite::tungstenite::Message;
-use tokio_tungstenite::{accept_async, WebSocketStream};
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
@@ -36,14 +35,8 @@ pub async fn start_websocket_server(game_world: GameWorld, client_list: ClientLi
     Ok(())
 }
 
-type Writter = SplitSink<WebSocketStream<TcpStream>, Message>;
-type Reader = SplitStream<WebSocketStream<TcpStream>>;
-
-async fn handle_connection(
-    stream: TcpStream,
-    mut game_world: GameWorld,
-    client_list: ClientList,
-) -> Result<()> {
+async fn handle_connection(stream: TcpStream, mut game_world: GameWorld, client_list: ClientList) -> Result<()>
+{
     let ws_stream = accept_async(stream).await?;
     let (write, mut read) = ws_stream.split();
 
@@ -56,7 +49,7 @@ async fn handle_connection(
         clients.push(tx.clone());
     }
 
-    // **NEW**: Initialize player_id as None
+    //Initialize player_id as None
     let mut player_id: Option<Uuid> = None;
 
     // Spawn a task to forward messages from rx to write
@@ -73,14 +66,14 @@ async fn handle_connection(
     // Process incoming messages
     while let Some(msg) = read.next().await {
         let msg = msg?;
-    
+
         // Ignore non-text messages
         if !msg.is_text() {
             continue;
         }
-    
+
         let packet: WsClientPacket = serde_json::from_str(&msg.to_string())?;
-    
+
         handle_client_packet(
             &mut game_world,
             tx.clone(),
@@ -104,11 +97,7 @@ async fn handle_connection(
         game_world.remove_snake(id);
 
         // Broadcast the PlayerLeft event
-        broadcast_message(
-            &client_list,
-            ServerMessage::PlayerLeft,
-            serde_json::json!({ "id": id }),
-        )?;
+        broadcast_message(&client_list, ServerMessage::PlayerLeft, serde_json::json!({ "id": id }))?;
 
         debug!("Removed player {} from the game", id);
     } else {
@@ -124,52 +113,44 @@ async fn handle_client_packet(
     client_list: ClientList,
     packet: WsClientPacket,
     player_id: &mut Option<Uuid>,
-) -> Result<()> {
+) -> Result<()>
+{
     match packet.message {
         ClientMessage::JoinGame => {
             let name = packet.data.to_string();
-    
-            let snake = Snake::new(
-                Uuid::new_v4(),
-                name.clone(),
-                Rgb::random(),
-                false,
-                create_random_position(),
-            );
-    
+
+            let snake = Snake::new(Uuid::new_v4(), name.clone(), Rgb::random(), false, create_random_position());
+
             // Update player_id via mutable reference
             // This way we can track the player's ID in the client list
             *player_id = Some(snake.id);
-    
+
             game_world.add_snake(snake.clone());
-    
+
             debug!("Added new player {} to the game", name);
-    
-            tx.send(Message::Text(
-                serde_json::to_string(&WsServerPacket {
-                    message: ServerMessage::PlayerInit,
-                    data: serde_json::json!(snake),
-                })?,
-            ))?;
-    
-            broadcast_message(
-                &client_list,
-                ServerMessage::PlayerJoined,
-                serde_json::json!(snake),
-            )?;
+
+            tx.send(Message::Text(serde_json::to_string(&WsServerPacket {
+                message: ServerMessage::PlayerInit,
+                data: serde_json::json!(snake),
+            })?))?;
+
+            broadcast_message(&client_list, ServerMessage::PlayerJoined, serde_json::json!(snake))?;
         }
-        // Handle other messages...
+        ClientMessage::MoveSnake => {
+            let direction: f32 = serde_json::from_value(packet.data)?;
+
+            if let Some(id) = player_id {
+                game_world.update_snake_direction(*id, direction);
+            }
+        }
         _ => {}
     }
 
     Ok(())
 }
 
-fn broadcast_message(
-    client_list: &ClientList,
-    message_type: ServerMessage,
-    data: serde_json::Value,
-) -> Result<()> {
+fn broadcast_message(client_list: &ClientList, message_type: ServerMessage, data: serde_json::Value) -> Result<()>
+{
     let clients = client_list.lock().unwrap();
     let response_packet = WsServerPacket {
         message: message_type,

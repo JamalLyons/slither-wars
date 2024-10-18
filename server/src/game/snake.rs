@@ -29,8 +29,8 @@ impl Snake
             position: pos,
             direction: 0.0,
             speed: crate::constants::PLAYER_DEFAULT_SPEED,
-            body: vec![],
-            length: 10,
+            body: vec![pos],
+            length: 1,
             is_dead: false,
             score: 0,
             is_bot,
@@ -38,5 +38,23 @@ impl Snake
         }
     }
 
-    // Methods to move the snake, rotate, etc.
+    pub fn move_forward(&mut self) {
+        // Update position based on direction and speed
+        let delta_x = self.speed * self.direction.to_radians().cos();
+        let delta_y = self.speed * self.direction.to_radians().sin();
+        self.position.0 += delta_x;
+        self.position.1 += delta_y;
+
+        // Add new position to the front of the body
+        self.body.insert(0, self.position);
+
+        // Remove last segment if body is longer than length
+        if self.body.len() > self.length as usize {
+            self.body.pop();
+        }
+    }
+
+    pub fn grow(&mut self, amount: u32) {
+        self.length += amount;
+    }
 }

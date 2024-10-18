@@ -6,7 +6,7 @@
     <title>Slither Wars</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body class="bg-gray-900 text-white">
+<body class="bg-gray-900 text-white w-screen h-screen">
     <!-- Loading Screen -->
     <div id="loadingScreen" class="fixed inset-0 flex items-center justify-center">
         <div class="text-center">
@@ -19,7 +19,7 @@
     </div>
 
     <!-- Game Canvas -->
-    <canvas id="gameCanvas" width="800" height="600" class="mx-auto block"></canvas>
+    <canvas id="gameCanvas" class="absolute top-0 left-0 w-full h-full hidden"></canvas>
 
     <!-- Leaderboard -->
     <div id="leaderboard" class="absolute top-4 right-4 bg-gray-800 bg-opacity-75 p-4 rounded hidden">

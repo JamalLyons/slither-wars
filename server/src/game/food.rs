@@ -10,12 +10,12 @@ pub struct Food
 
 impl Food
 {
-    pub fn new(position: (f32, f32)) -> Self
+    pub fn new(position: (f32, f32), color: Option<Rgb>) -> Self
     {
         Self {
             position,
             value: 1,
-            color: Rgb::random_food(),
+            color: color.unwrap_or(Rgb::random_food()),
         }
     }
 

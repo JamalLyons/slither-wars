@@ -5,6 +5,7 @@ pub const MAX_PLAYERS: usize = 100;
 pub const PLAYER_DEFAULT_SPEED: f32 = 1.0;
 pub const WORLD_WIDTH: f32 = 5000.0;
 pub const WORLD_HEIGHT: f32 = 5000.0;
+pub const COLLISION_THRESHOLD: f32 = 10.0;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Rgb(pub u8, pub u8, pub u8);

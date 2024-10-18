@@ -27,7 +27,7 @@ async fn main()
     let client_list: ClientList = Arc::new(Mutex::new(Vec::new()));
 
     // Initialize game world
-    let game_world = game::world::GameWorld::new();
+    let game_world = game::world::GameWorld::new(client_list.clone());
 
     debug!("{:?}", game_world.to_string());
 

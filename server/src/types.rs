@@ -41,13 +41,15 @@ pub enum ServerMessage
     PlayerJoined,
     /// Event triggered when a player disconnects from the game. (Used to alert other players of disconnect)
     PlayerLeft,
-    /// Event triggered when a player moves
-    PlayerMoved,
+    SnakeDied,
+
+    UpdateSnake,
 
     IncreasePlayerLength,
     DecreasePlayerLength,
 
     UpdateLeaderboard,
     UpdateMinimap,
-    FoodSpawn,
+    FoodSpawned,
+    FoodEaten,
 }
