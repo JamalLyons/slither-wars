@@ -3,5 +3,17 @@
 version = 4
 
 [[package]]
-name = "server"
+name = "slither-wars-server"
+version = "0.1.0"
+dependencies = [
+ "slither_common",
+ "slither_protocal",
+]
+
+[[package]]
+name = "slither_common"
+version = "0.1.0"
+
+[[package]]
+name = "slither_protocal"
 version = "0.1.0"

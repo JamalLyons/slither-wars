@@ -1,6 +1,9 @@
 [package]
-name = "server"
+name = "slither-wars-server"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+
+slither_common = { path = "../common" }
+slither_protocal = { path = "../protocal" }

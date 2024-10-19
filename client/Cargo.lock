@@ -1327,14 +1327,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "client"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "log",
-]
-
-[[package]]
 name = "codespan-reporting"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3258,6 +3250,24 @@ checksum = "8f92a496fb766b417c996b9c5e57daf2f7ad3b0bebe1ccfca4856390e3d3bb67"
 dependencies = [
  "autocfg",
 ]
+
+[[package]]
+name = "slither-wars-client"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "log",
+ "slither_common",
+ "slither_protocal",
+]
+
+[[package]]
+name = "slither_common"
+version = "0.1.0"
+
+[[package]]
+name = "slither_protocal"
+version = "0.1.0"
 
 [[package]]
 name = "slotmap"
