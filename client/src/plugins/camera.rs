@@ -10,6 +10,7 @@
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::prelude::*;
 
+use crate::plugins::constants::*;
 use crate::plugins::*;
 
 pub struct CameraPlugin;
@@ -18,12 +19,12 @@ impl Plugin for CameraPlugin
 {
     fn build(&self, app: &mut App)
     {
-        app.add_systems(Startup, setup_camera);
-        app.add_systems(Update, (move_player, update_camera).chain());
+        app.add_systems(Startup, setup);
+        app.add_systems(Update, (move_player, update).chain());
     }
 }
 
-fn setup_camera(mut commands: Commands)
+fn setup(mut commands: Commands)
 {
     commands.spawn((
         Camera2dBundle {
@@ -38,7 +39,7 @@ fn setup_camera(mut commands: Commands)
 }
 
 /// Update the camera position by tracking the player.
-fn update_camera(
+fn update(
     mut camera: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
     player: Query<&Transform, (With<Player>, Without<Camera2d>)>,
     time: Res<Time>,
