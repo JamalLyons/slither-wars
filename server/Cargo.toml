@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 
 slither_common = { path = "../common" }
-slither_protocal = { path = "../protocal" }
+slither_protocol = { path = "../protocol" }

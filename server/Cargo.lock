@@ -7,7 +7,7 @@ name = "slither-wars-server"
 version = "0.1.0"
 dependencies = [
  "slither_common",
- "slither_protocal",
+ "slither_protocol",
 ]
 
 [[package]]
@@ -15,5 +15,5 @@ name = "slither_common"
 version = "0.1.0"
 
 [[package]]
-name = "slither_protocal"
+name = "slither_protocol"
 version = "0.1.0"
