@@ -18,7 +18,7 @@ impl Plugin for FpsPlugin
                     // If we want, we can use a custom font
                     font: default(),
                 },
-            }
+            },
         });
     }
 }
