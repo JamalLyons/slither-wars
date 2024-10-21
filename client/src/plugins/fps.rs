@@ -1,3 +1,7 @@
+///! Author: CodingWithJamal
+///! Date: 10/20/24
+///!
+///! Description: Plugin for displaying the FPS
 use bevy::prelude::*;
 use bevy_dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin};
 
@@ -7,6 +11,7 @@ impl Plugin for FpsPlugin
 {
     fn build(&self, app: &mut App)
     {
+        // todo - Add this display in the game settings menu
         #[cfg(debug_assertions)]
         app.add_plugins(FpsOverlayPlugin {
             config: FpsOverlayConfig {

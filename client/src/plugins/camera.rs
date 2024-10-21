@@ -1,12 +1,7 @@
-//! ## Controls
-//!
-//! | Key Binding          | Action        |
-//! |:---------------------|:--------------|
-//! | `Z`(azerty), `W`(US) | Move forward  |
-//! | `S`                  | Move backward |
-//! | `Q`(azerty), `A`(US) | Move left     |
-//! | `D`                  | Move right    |
-
+///! Author: CodingWithJamal
+///! Date: 10/20/24
+///!
+///! Description: Camera plugin for the game
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::prelude::*;
 
