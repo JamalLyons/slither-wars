@@ -68,10 +68,10 @@ fn game_setup(mut commands: Commands, display_quality: Res<DisplayQuality>, volu
                                 ..default()
                             },
                         )
-                            .with_style(Style {
-                                margin: UiRect::all(Val::Px(50.0)),
-                                ..default()
-                            }),
+                        .with_style(Style {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        }),
                     );
                     parent.spawn(
                         TextBundle::from_sections([
@@ -100,10 +100,10 @@ fn game_setup(mut commands: Commands, display_quality: Res<DisplayQuality>, volu
                                 },
                             ),
                         ])
-                            .with_style(Style {
-                                margin: UiRect::all(Val::Px(50.0)),
-                                ..default()
-                            }),
+                        .with_style(Style {
+                            margin: UiRect::all(Val::Px(50.0)),
+                            ..default()
+                        }),
                     );
                 });
         });

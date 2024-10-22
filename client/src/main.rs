@@ -6,13 +6,14 @@ mod constants;
 mod game;
 mod menu;
 
-use crate::shared::*;
 use bevy::core::FrameCount;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::math::vec3;
 use bevy::prelude::*;
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use bevy::window::{PresentMode, WindowTheme};
+
+use crate::shared::*;
 
 pub fn setup_scene(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>)
 {
@@ -38,7 +39,8 @@ pub fn setup_scene(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut
     ));
 }
 
-fn make_visible(mut window: Query<&mut Window>, frames: Res<FrameCount>) {
+fn make_visible(mut window: Query<&mut Window>, frames: Res<FrameCount>)
+{
     // The delay may be different for your app or system.
     if frames.0 == 3 {
         // At this point the gpu is ready to show the app so we can make the window visible.

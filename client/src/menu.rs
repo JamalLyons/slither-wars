@@ -314,10 +314,10 @@ mod menu
                                     ..default()
                                 },
                             )
-                                .with_style(Style {
-                                    margin: UiRect::all(Val::Px(50.0)),
-                                    ..default()
-                                }),
+                            .with_style(Style {
+                                margin: UiRect::all(Val::Px(50.0)),
+                                ..default()
+                            }),
                         );
 
                         // Display three buttons for each action available from the main menu:
