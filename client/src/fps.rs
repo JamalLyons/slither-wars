@@ -1,7 +1,3 @@
-///! Author: CodingWithJamal
-///! Date: 10/20/24
-///!
-///! Description: Plugin for displaying the FPS
 use bevy::prelude::*;
 use bevy_dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin};
 

@@ -1,12 +1,8 @@
-///! Author: CodingWithJamal
-///! Date: 10/20/24
-///!
-///! Description: Camera plugin for the game
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::prelude::*;
 
-use crate::plugins::constants::*;
-use crate::plugins::*;
+use crate::constants::*;
+use crate::shared::*;
 
 pub struct CameraPlugin;
 
