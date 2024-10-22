@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::shared::GameMenuState;
+use crate::shared::GameState;
 
 // One of the two settings that can be set through the menu. It will be a resource in the app
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy, Default)]
@@ -23,8 +23,8 @@ impl Plugin for GameMenuPlugin
     fn build(&self, app: &mut App)
     {
         app.insert_resource(DisplayQuality::default());
-        app.insert_resource(Volume(100));
-        app.init_state::<GameMenuState>();
+        app.insert_resource(Volume(5));
+        app.init_state::<GameState>();
         app.add_plugins(splash::splash_plugin);
         app.add_plugins(menu::menu_plugin);
     }
@@ -42,18 +42,18 @@ mod splash
         // As this plugin is managing the splash screen, it will focus on the state `GameState::Splash`
         app
             // When entering the state, spawn everything needed for this screen
-            .add_systems(OnEnter(GameMenuState::Splash), splash_setup)
+            .add_systems(OnEnter(GameState::Splash), splash_setup)
             // While in this state, run the `countdown` system
-            .add_systems(Update, countdown.run_if(in_state(GameMenuState::Splash)))
+            .add_systems(Update, countdown.run_if(in_state(GameState::Splash)))
             // When exiting the state, despawn everything that was spawned for this screen
-            .add_systems(OnExit(GameMenuState::Splash), despawn_screen::<OnSplashScreen>);
+            .add_systems(OnExit(GameState::Splash), despawn_screen::<OnSplashScreen>);
     }
 
     // Tag component used to tag entities added on the splash screen
     #[derive(Component)]
     struct OnSplashScreen;
 
-    // Newtype to use a `Timer` for this screen as a resource
+    // New type to use a `Timer` for this screen as a resource
     #[derive(Resource, Deref, DerefMut)]
     struct SplashTimer(Timer);
 
@@ -91,10 +91,10 @@ mod splash
     }
 
     // Tick the timer, and change state when finished
-    fn countdown(mut game_state: ResMut<NextState<GameMenuState>>, time: Res<Time>, mut timer: ResMut<SplashTimer>)
+    fn countdown(mut game_state: ResMut<NextState<GameState>>, time: Res<Time>, mut timer: ResMut<SplashTimer>)
     {
         if timer.tick(time.delta()).finished() {
-            game_state.set(GameMenuState::Menu);
+            game_state.set(GameState::Menu);
         }
     }
 }
@@ -120,7 +120,7 @@ mod menu
             // entering the `GameState::Menu` state.
             // Current screen in the menu is handled by an independent state from `GameState`
             .init_state::<MenuState>()
-            .add_systems(OnEnter(GameMenuState::Menu), menu_setup)
+            .add_systems(OnEnter(GameState::Menu), menu_setup)
             // Systems to handle the main menu screen
             .add_systems(OnEnter(MenuState::Main), main_menu_setup)
             .add_systems(OnExit(MenuState::Main), despawn_screen::<OnMainMenuScreen>)
@@ -156,7 +156,7 @@ mod menu
             // Common systems to all screens that handles buttons behavior
             .add_systems(
                 Update,
-                (menu_action, button_system).run_if(in_state(GameMenuState::Menu)),
+                (menu_action, button_system).run_if(in_state(GameState::Menu)),
             );
     }
 
@@ -307,17 +307,17 @@ mod menu
                         // Display the game name
                         parent.spawn(
                             TextBundle::from_section(
-                                "Bevy Game Menu UI",
+                                "Slither Wars (DEV BUILD)",
                                 TextStyle {
                                     font_size: 80.0,
                                     color: TEXT_COLOR,
                                     ..default()
                                 },
                             )
-                            .with_style(Style {
-                                margin: UiRect::all(Val::Px(50.0)),
-                                ..default()
-                            }),
+                                .with_style(Style {
+                                    margin: UiRect::all(Val::Px(50.0)),
+                                    ..default()
+                                }),
                         );
 
                         // Display three buttons for each action available from the main menu:
@@ -636,7 +636,7 @@ mod menu
         interaction_query: Query<(&Interaction, &MenuButtonAction), (Changed<Interaction>, With<Button>)>,
         mut app_exit_events: EventWriter<AppExit>,
         mut menu_state: ResMut<NextState<MenuState>>,
-        mut game_state: ResMut<NextState<GameMenuState>>,
+        mut game_state: ResMut<NextState<GameState>>,
     )
     {
         for (interaction, menu_button_action) in &interaction_query {
@@ -646,7 +646,7 @@ mod menu
                         app_exit_events.send(AppExit::Success);
                     }
                     MenuButtonAction::Play => {
-                        game_state.set(GameMenuState::Game);
+                        game_state.set(GameState::Game);
                         menu_state.set(MenuState::Disabled);
                     }
                     MenuButtonAction::Settings => menu_state.set(MenuState::Settings),

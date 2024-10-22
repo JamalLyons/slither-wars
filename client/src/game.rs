@@ -11,9 +11,9 @@ impl Plugin for GamePlugin
 {
     fn build(&self, app: &mut App)
     {
-        app.add_systems(OnEnter(GameMenuState::Game), game_setup);
-        app.add_systems(Update, game.run_if(in_state(GameMenuState::Game)));
-        app.add_systems(OnExit(GameMenuState::Game), despawn_screen::<OnGameScreen>);
+        app.add_systems(OnEnter(GameState::Game), game_setup);
+        app.add_systems(Update, game.run_if(in_state(GameState::Game)));
+        app.add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
     }
 }
 
@@ -68,10 +68,10 @@ fn game_setup(mut commands: Commands, display_quality: Res<DisplayQuality>, volu
                                 ..default()
                             },
                         )
-                        .with_style(Style {
-                            margin: UiRect::all(Val::Px(50.0)),
-                            ..default()
-                        }),
+                            .with_style(Style {
+                                margin: UiRect::all(Val::Px(50.0)),
+                                ..default()
+                            }),
                     );
                     parent.spawn(
                         TextBundle::from_sections([
@@ -100,10 +100,10 @@ fn game_setup(mut commands: Commands, display_quality: Res<DisplayQuality>, volu
                                 },
                             ),
                         ])
-                        .with_style(Style {
-                            margin: UiRect::all(Val::Px(50.0)),
-                            ..default()
-                        }),
+                            .with_style(Style {
+                                margin: UiRect::all(Val::Px(50.0)),
+                                ..default()
+                            }),
                     );
                 });
         });
@@ -112,9 +112,9 @@ fn game_setup(mut commands: Commands, display_quality: Res<DisplayQuality>, volu
 }
 
 // Tick the timer, and change state when finished
-fn game(time: Res<Time>, mut game_state: ResMut<NextState<GameMenuState>>, mut timer: ResMut<GameTimer>)
+fn game(time: Res<Time>, mut game_state: ResMut<NextState<GameState>>, mut timer: ResMut<GameTimer>)
 {
     if timer.tick(time.delta()).finished() {
-        game_state.set(GameMenuState::Menu);
+        game_state.set(GameState::Menu);
     }
 }
