@@ -2,7 +2,8 @@ mod camera;
 mod fps;
 mod shared;
 
-pub mod constants;
+mod constants;
+mod game;
 mod menu;
 
 use bevy::math::vec3;
@@ -42,6 +43,7 @@ fn main()
         .add_plugins(camera::CameraPlugin)
         .add_plugins(fps::FpsPlugin)
         .add_plugins(menu::GameMenuPlugin)
+        .add_plugins(game::GamePlugin)
         .add_systems(Startup, setup_scene)
         .run();
 }

@@ -1,0 +1,7 @@
+Stage one.
+
+The first stage of development for the client was to learn bevy and build a simple game prototype
+as fast as possible.
+
+A lot of refactoring is being done in this "v0" development. Later, I will do another refactor and
+make the code more modular / reusable and add proper testing.
