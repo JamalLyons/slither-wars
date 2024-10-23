@@ -1,4 +1,5 @@
 use bevy::core_pipeline::bloom::BloomSettings;
+use bevy::input::mouse::*;
 use bevy::prelude::*;
 
 use crate::constants::*;
@@ -11,7 +12,7 @@ impl Plugin for CameraPlugin
     fn build(&self, app: &mut App)
     {
         app.add_systems(Startup, setup);
-        app.add_systems(Update, (move_player, update).chain());
+        app.add_systems(Update, (print_mouse_events_system, move_player, update).chain());
     }
 }
 
@@ -85,4 +86,20 @@ fn move_player(mut player: Query<&mut Transform, With<Player>>, time: Res<Time>,
     // moving diagonally.
     let move_delta = direction.normalize_or_zero() * PLAYER_SPEED * time.delta_seconds();
     player.translation += move_delta.extend(0.);
+}
+
+/// This system prints out all mouse events as they come in
+fn print_mouse_events_system(
+    mut mouse_button_input_events: EventReader<MouseButtonInput>,
+    mut cursor_moved_events: EventReader<CursorMoved>,
+) {
+    // We will use this to control player boost speed when the left mouse button is pressed
+    for event in mouse_button_input_events.read() {
+        info!("{:?}", event);
+    }
+
+    // We will use this to control player movement when the cursor moves a direction
+    for event in cursor_moved_events.read() {
+        info!("{:?}", event);
+    }
 }
