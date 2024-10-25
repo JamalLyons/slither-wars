@@ -1,9 +1,6 @@
-use bevy::color::palettes::basic::{BLUE, LIME};
 use bevy::prelude::*;
 
-use crate::constants::TEXT_COLOR;
-use crate::menu::{DisplayQuality, Volume};
-use crate::shared::*;
+use crate::{constants::*, shared::*};
 
 pub struct GamePlugin;
 
@@ -12,7 +9,7 @@ impl Plugin for GamePlugin
     fn build(&self, app: &mut App)
     {
         app.add_systems(OnEnter(GameState::Game), game_setup);
-        app.add_systems(Update, game.run_if(in_state(GameState::Game)));
+        app.add_systems(Update, (game_loop.run_if(in_state(GameState::Game)), move_player.run_if(in_state(GameState::Game))));
         app.add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
     }
 }
@@ -21,100 +18,46 @@ impl Plugin for GamePlugin
 #[derive(Component)]
 struct OnGameScreen;
 
-#[derive(Resource, Deref, DerefMut)]
-struct GameTimer(Timer);
+fn game_setup(mut commands: Commands) {
 
-fn game_setup(mut commands: Commands, display_quality: Res<DisplayQuality>, volume: Res<Volume>)
-{
-    commands
-        .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    // center children
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
-                ..default()
-            },
-            OnGameScreen,
-        ))
-        .with_children(|parent| {
-            // First create a `NodeBundle` for centering what we want to display
-            parent
-                .spawn(NodeBundle {
-                    style: Style {
-                        // This will display its children in a column, from top to bottom
-                        flex_direction: FlexDirection::Column,
-                        // `align_items` will align children on the cross axis. Here the main axis is
-                        // vertical (column), so the cross axis is horizontal. This will center the
-                        // children
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    background_color: Color::BLACK.into(),
-                    ..default()
-                })
-                .with_children(|parent| {
-                    // Display two lines of text, the second one with the current settings
-                    parent.spawn(
-                        TextBundle::from_section(
-                            "Will be back to the menu shortly...",
-                            TextStyle {
-                                font_size: 80.0,
-                                color: TEXT_COLOR,
-                                ..default()
-                            },
-                        )
-                        .with_style(Style {
-                            margin: UiRect::all(Val::Px(50.0)),
-                            ..default()
-                        }),
-                    );
-                    parent.spawn(
-                        TextBundle::from_sections([
-                            TextSection::new(
-                                format!("quality: {:?}", *display_quality),
-                                TextStyle {
-                                    font_size: 60.0,
-                                    color: BLUE.into(),
-                                    ..default()
-                                },
-                            ),
-                            TextSection::new(
-                                " - ",
-                                TextStyle {
-                                    font_size: 60.0,
-                                    color: TEXT_COLOR,
-                                    ..default()
-                                },
-                            ),
-                            TextSection::new(
-                                format!("volume: {:?}", *volume),
-                                TextStyle {
-                                    font_size: 60.0,
-                                    color: LIME.into(),
-                                    ..default()
-                                },
-                            ),
-                        ])
-                        .with_style(Style {
-                            margin: UiRect::all(Val::Px(50.0)),
-                            ..default()
-                        }),
-                    );
-                });
-        });
-    // Spawn a 5 seconds timer to trigger going back to the menu
-    commands.insert_resource(GameTimer(Timer::from_seconds(5.0, TimerMode::Once)));
 }
 
-// Tick the timer, and change state when finished
-fn game(time: Res<Time>, mut game_state: ResMut<NextState<GameState>>, mut timer: ResMut<GameTimer>)
+fn game_loop(time: Res<Time>, mut game_state: ResMut<NextState<GameState>>) {}
+
+/// Update the player position based on the cursor movement
+fn move_player(mut player: Query<&mut Transform, With<Player>>, windows: Query<&mut Window>, mut cursor_moved_events: EventReader<CursorMoved>, time: Res<Time>)
 {
-    if timer.tick(time.delta()).finished() {
-        game_state.set(GameState::Menu);
-    }
+    let Ok(mut player) = player.get_single_mut() else {
+        return;
+    };
+
+    // Get the primary window
+    let window = windows.single();
+
+    // Get the most recent cursor movement event
+    let Some(cursor_moved) = cursor_moved_events.read().last() else {
+        return;
+    };
+
+    // Convert cursor position to world coordinates
+    // First, get the cursor position within the window
+    let cursor_position = Vec2::new(
+        cursor_moved.position.x - window.width() / 2.0, 
+        cursor_moved.position.y - window.height() / 2.0,
+    );
+
+    // Get the player's current position in 2D space
+    let player_position = Vec2::new(player.translation.x, player.translation.y);
+
+    // Calculate the direction vector from the player to the cursor
+    let direction = (cursor_position - player_position).normalize_or_zero();
+
+    // Smooth movement: you can use an interpolation factor like in your camera code
+    let move_delta = direction * PLAYER_SPEED * time.delta_seconds();
+
+    // Update player position smoothly
+    player.translation = player.translation.lerp(
+        (player_position + move_delta).extend(player.translation.z),
+        1.,  // This factor controls how smoothly the player moves; smaller values make the movement more gradual
+    );
 }

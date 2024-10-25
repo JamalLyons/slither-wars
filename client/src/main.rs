@@ -13,13 +13,14 @@ use bevy::prelude::*;
 use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
 use bevy::window::{PresentMode, WindowTheme};
 
+use crate::constants::*;
 use crate::shared::*;
 
 pub fn setup_scene(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>)
 {
     // World where we move the player
     commands.spawn(MaterialMesh2dBundle {
-        mesh: Mesh2dHandle(meshes.add(Rectangle::new(1000., 700.))),
+        mesh: Mesh2dHandle(meshes.add(Rectangle::new(SCREEN_WIDTH, SCREEN_HEIGHT))),
         material: materials.add(Color::srgb(0.2, 0.2, 0.3)),
         ..default()
     });
