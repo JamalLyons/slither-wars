@@ -9,10 +9,10 @@ mod constants;
 mod game;
 mod menu;
 
-use bevy::prelude::*;
 use bevy::core::FrameCount;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
+use bevy::prelude::*;
 use bevy::window::{PresentMode, WindowTheme};
 
 pub fn setup_scene(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>)

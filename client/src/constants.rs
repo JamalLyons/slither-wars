@@ -1,11 +1,12 @@
 use bevy::color::Color;
 
-/// Camera lerp factor.
-pub const CAM_LERP_FACTOR: f32 = 2.5;
+pub const CAM_LERP_FACTOR: f32 = 5.;
 
-/// Player movement speed factor.
-pub const PLAYER_SPEED: f32 = 300.;
-pub const PLAYER_DEFAULT_LENGTH: u32 = 10;
+pub const PLAYER_SPEED: f32 = 100.;             // Pixels per second
+pub const PLAYER_DEFAULT_LENGTH: u32 = 10;     // Number of segments the player starts with
+pub const SEGMENT_SPACING: f32 = 25.0;          // Pixels between each segment
+pub const MAX_SEGMENT_HISTORY: usize = 1000;     // Number of positions to keep track of at once
+pub const POSITIONS_PER_SEGMENT: usize = 5;     // Number of positions per segment
 
 /// Text color
 pub const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
