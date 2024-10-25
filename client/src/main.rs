@@ -1,4 +1,7 @@
-mod camera;
+#![allow(unused_mut)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 mod fps;
 mod shared;
 
@@ -6,37 +9,24 @@ mod constants;
 mod game;
 mod menu;
 
-use bevy::core::FrameCount;
-use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
-use bevy::math::vec3;
 use bevy::prelude::*;
-use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
+use bevy::core::FrameCount;
+use bevy::core_pipeline::bloom::BloomSettings;
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::window::{PresentMode, WindowTheme};
-
-use crate::constants::*;
-use crate::shared::*;
 
 pub fn setup_scene(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>)
 {
-    // World where we move the player
-    commands.spawn(MaterialMesh2dBundle {
-        mesh: Mesh2dHandle(meshes.add(Rectangle::new(SCREEN_WIDTH, SCREEN_HEIGHT))),
-        material: materials.add(Color::srgb(0.2, 0.2, 0.3)),
-        ..default()
-    });
-
-    // Player
+    // Setup the camera
     commands.spawn((
-        Player,
-        MaterialMesh2dBundle {
-            mesh: meshes.add(Circle::new(25.)).into(),
-            material: materials.add(Color::srgb(6.25, 9.4, 9.1)), // RGB values exceed 1 to achieve a bright color for the bloom effect
-            transform: Transform {
-                translation: vec3(0., 0., 2.),
+        Camera2dBundle {
+            camera: Camera {
+                hdr: true, // HDR is required for the bloom effect
                 ..default()
             },
             ..default()
         },
+        BloomSettings::NATURAL,
     ));
 }
 
@@ -81,7 +71,6 @@ fn main()
             LogDiagnosticsPlugin::default(),
             FrameTimeDiagnosticsPlugin,
         ))
-        .add_plugins(camera::CameraPlugin)
         .add_plugins(fps::FpsPlugin)
         .add_plugins(menu::GameMenuPlugin)
         .add_plugins(game::GamePlugin)
