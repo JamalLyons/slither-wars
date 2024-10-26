@@ -17,7 +17,8 @@ use bevy::window::{PresentMode, WindowTheme};
 
 pub fn setup_scene(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>)
 {
-    // Setup the camera
+    // Setup the camera.
+    // This needs to be spawned before anything else.
     commands.spawn((
         Camera2dBundle {
             camera: Camera {
@@ -30,6 +31,9 @@ pub fn setup_scene(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut
     ));
 }
 
+/// Make the window visible in the next 3 frames.
+/// We use this to avoid the white window that shows up before the GPU is ready to render the app.
+/// This happens so fast the the user will not see it.
 fn make_visible(mut window: Query<&mut Window>, frames: Res<FrameCount>)
 {
     // The delay may be different for your app or system.
