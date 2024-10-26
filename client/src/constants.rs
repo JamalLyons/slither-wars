@@ -8,9 +8,7 @@ pub const SEGMENT_SPACING: f32 = 25.0;          // Pixels between each segment
 pub const MAX_SEGMENT_HISTORY: usize = 1000;     // Number of positions to keep track of at once
 pub const POSITIONS_PER_SEGMENT: usize = 5;     // Number of positions per segment
 
-/// Text color
 pub const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 
-/// Screen size
 pub const SCREEN_WIDTH: f32 = 1000.;
 pub const SCREEN_HEIGHT: f32 = 700.;
