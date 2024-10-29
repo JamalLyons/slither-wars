@@ -46,6 +46,7 @@ pub struct Player
     pub boost_timer: f32,     // Accumulates time for score deduction
     pub orb_spawn_timer: f32, // Controls orb spawn intervals during boosting
     pub segment_count: u32,
+    pub segments: VecDeque<Entity>,
 }
 
 impl Player
@@ -60,13 +61,14 @@ impl Player
             color,
             boost_timer: 0.0,
             orb_spawn_timer: 0.0,
-            segment_count: PLAYER_DEFAULT_LENGTH,
+            segment_count: 0,
+            segments: VecDeque::with_capacity(MAX_GROWTH_LIMIT as usize),
         }
     }
 }
 
 /// A segment of the player snake body
-#[derive(Component, Clone, Debug)]
+#[derive(Component)]
 pub struct Segment
 {
     pub radius: f32,

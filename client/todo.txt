@@ -1,0 +1,4 @@
+- add ai bot players
+- 
+- add leaderboard (support bots on there)
+- make complex movement system

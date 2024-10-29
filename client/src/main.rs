@@ -14,8 +14,9 @@ use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::window::{PresentMode, WindowTheme};
+use constants::*;
 
-pub fn setup_scene(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>)
+pub fn setup_scene(mut commands: Commands)
 {
     // Setup the camera.
     // This needs to be spawned before anything else.
@@ -53,7 +54,7 @@ fn main()
                 primary_window: Some(Window {
                     title: "Slither Wars Client".into(),
                     name: Some("slither-wars.app".into()),
-                    resolution: (800., 600.).into(),
+                    resolution: (SCREEN_WIDTH, SCREEN_HEIGHT).into(),
                     present_mode: PresentMode::AutoVsync,
                     // Tells wasm to resize the window according to the available canvas
                     fit_canvas_to_parent: true,
