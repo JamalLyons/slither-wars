@@ -4,6 +4,9 @@ use bevy::sprite::MaterialMesh2dBundle;
 use crate::constants::*;
 use crate::shared::*;
 
+#[derive(Component)]
+pub struct ScoreText;
+
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin
@@ -14,20 +17,38 @@ impl Plugin for GamePlugin
         app.add_systems(OnEnter(GameState::Game), game_setup);
         app.add_systems(
             Update,
-            (move_player, update_camera, spawn_orbs_system, orb_collection_system)
+            (
+                move_player,
+                update_camera,
+                spawn_orbs_system,
+                orb_collection_system,
+                update_score_text,
+            )
                 .chain()
                 .run_if(in_state(GameState::Game)),
         );
         // Cleans up game entities. This is useful so when the player starts a new game, the state is reset.
         app.add_systems(
             OnExit(GameState::Game),
-            (despawn_screen::<Player>, despawn_screen::<Segment>, despawn_screen::<Orb>),
+            (
+                despawn_screen::<Player>,
+                despawn_screen::<Segment>,
+                despawn_screen::<Orb>,
+                despawn_screen::<ScoreText>,
+                despawn_screen::<PositionHistory>,
+            ),
         );
     }
 }
 
-pub fn game_setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>)
+pub fn game_setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+)
 {
+    // Spawn the map boundary
     commands.spawn((
         Name::new("Map Boundary"),
         MaterialMesh2dBundle {
@@ -41,33 +62,64 @@ pub fn game_setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut 
         },
     ));
 
+    // Spawn the score text
+    commands.spawn((
+        ScoreText,
+        TextBundle::from_section(
+            "Score: 0",
+            TextStyle {
+                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                font_size: 30.0,
+                color: Color::WHITE,
+                ..default()
+            },
+        )
+        .with_text_justify(JustifyText::Center)
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            left: Val::Px(10.0),
+            bottom: Val::Px(10.0),
+            ..default()
+        }),
+    ));
+
     // Spawn the Player entity
+    let player_color = generate_random_color();
+    let player_size = Vec3::new(PLAYER_DEFAULT_RADIUS, PLAYER_DEFAULT_RADIUS, 1.0);
     let player_entity = commands
         .spawn((
-            Player::new("Player".to_string(), generate_random_color()),
-            SpatialBundle::default(),
+            Player::new("Player".to_string(), player_color),
+            MaterialMesh2dBundle {
+                mesh: meshes.add(Circle::new(1.0)).into(),
+                material: materials.add(ColorMaterial::from(player_color)),
+                transform: Transform {
+                    scale: player_size, // Scale to initial radius
+                    ..default()
+                },
+                ..default()
+            },
             PositionHistory::default(),
         ))
         .id();
 
     // Spawn segments and attach them to the player
     for i in 0..PLAYER_DEFAULT_LENGTH {
-        let segment_entity = commands
-            .spawn((
-                Segment {
-                    radius: PLAYER_DEFAULT_RADIUS,
-                },
-                MaterialMesh2dBundle {
-                    mesh: meshes.add(Circle::new(12.5)).into(),
-                    material: materials.add(Color::srgb(0.0, 1.0, 0.0)),
-                    transform: Transform {
-                        translation: Vec3::new(-(i as f32) * SEGMENT_SPACING, 0.0, 0.0),
-                        ..default()
-                    },
+        commands.spawn((
+            Segment {
+                radius: PLAYER_DEFAULT_RADIUS,
+                index: i,
+            },
+            MaterialMesh2dBundle {
+                mesh: meshes.add(Circle::new(1.0)).into(),
+                material: materials.add(player_color),
+                transform: Transform {
+                    translation: Vec3::new(-(i as f32) * SEGMENT_SPACING, 0.0, 0.0),
+                    scale: player_size,
                     ..default()
                 },
-            ))
-            .id();
+                ..default()
+            },
+        ));
     }
 }
 
@@ -77,7 +129,7 @@ pub fn move_player(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut game_state: ResMut<NextState<GameState>>,
     mut player_query: Query<(&mut Transform, &mut PositionHistory, &mut Player), With<Player>>,
-    mut segment_query: Query<&mut Transform, (With<Segment>, Without<Player>)>,
+    mut segment_query: Query<(&mut Transform, &Segment), Without<Player>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 )
@@ -148,7 +200,10 @@ pub fn move_player(
                         .map_or(Vec3::ZERO, |prev_pos| (player_transform.translation - *prev_pos).normalize());
                 }
 
-                let orb_position = player_transform.translation - direction * (player.radius + 4.0 + 1.0);
+                // Calculate the minimum safe distance to avoid immediate collection
+                let collection_threshold = player.radius + BOOST_ORB_RADIUS;
+                let orb_position =
+                    player_transform.translation - direction * (collection_threshold + ORB_SPAWN_DISTANCE_MARGIN);
 
                 spawn_orb(
                     &mut commands,
@@ -156,6 +211,7 @@ pub fn move_player(
                     &mut materials,
                     player.color,
                     orb_position.truncate(),
+                    BOOST_ORB_RADIUS,
                 );
 
                 player.orb_spawn_timer -= PLAYER_ORB_SPAWN_INTERVAL;
@@ -183,24 +239,25 @@ pub fn move_player(
 
             // Record position
             history.positions.push_front(player_transform.translation);
-            if history.positions.len() > MAX_SEGMENT_HISTORY {
+            if history.positions.len() > MAX_SEGMENT_HISTORY as usize {
                 history.positions.pop_back();
             }
         }
 
         // Record player's position
         history.positions.push_front(player_transform.translation);
-        if history.positions.len() > MAX_SEGMENT_HISTORY {
+        if history.positions.len() > MAX_SEGMENT_HISTORY as usize {
             history.positions.pop_back();
         }
 
         // Update segments
-        for (i, mut segment_transform) in segment_query.iter_mut().enumerate() {
-            let index = (i + 1) * POSITIONS_PER_SEGMENT;
-            if index < history.positions.len() {
-                segment_transform.translation = history.positions[index];
+        for (mut segment_transform, segment) in segment_query.iter_mut() {
+            let index = (segment.index + 1) * POSITIONS_PER_SEGMENT;
+            if index < history.positions.len().try_into().unwrap() {
+                segment_transform.translation = history.positions[index as usize];
+                // Ensure the segment's scale matches the player's radius
+                segment_transform.scale = Vec3::new(player.radius, player.radius, 1.0);
             } else {
-                // If not enough history, set position to player's current position
                 segment_transform.translation = player_transform.translation;
             }
         }
@@ -246,7 +303,7 @@ fn spawn_orbs_system(
             let position = generate_random_position_within_radius(game_settings.map_radius);
             let color = generate_random_color();
 
-            spawn_orb(&mut commands, &mut meshes, &mut materials, color, position);
+            spawn_orb(&mut commands, &mut meshes, &mut materials, color, position, ORB_RADIUS);
         }
     }
 }
@@ -258,11 +315,12 @@ fn spawn_orb(
     materials: &mut ResMut<Assets<ColorMaterial>>,
     color: Color,
     position: Vec2,
+    radius: f32,
 ) -> Entity
 {
     commands
         .spawn((
-            Orb,
+            Orb { radius },
             MaterialMesh2dBundle {
                 mesh: meshes.add(Circle::new(5.0)).into(), // Orbs have a radius of 5.0
                 material: materials.add(ColorMaterial::from(color)),
@@ -287,25 +345,77 @@ fn calculate_desired_orb_count(game_settings: &GameSettings) -> usize
 
 fn orb_collection_system(
     mut commands: Commands,
-    mut player_query: Query<(&Transform, &mut Player)>,
-    orb_query: Query<(Entity, &Transform), With<Orb>>,
+    mut player_query: Query<(&mut Transform, &mut Player), Without<Orb>>,
+    orb_query: Query<(Entity, &Transform, &Orb), Without<Player>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 )
 {
-    for (player_transform, mut player) in player_query.iter_mut() {
-        for (orb_entity, orb_transform) in orb_query.iter() {
+    for (mut player_transform, mut player) in player_query.iter_mut() {
+        for (orb_entity, orb_transform, orb) in orb_query.iter() {
             let distance = player_transform
                 .translation
                 .truncate()
                 .distance(orb_transform.translation.truncate());
 
-            if distance < player.radius + 5.0 {
+            if distance < player.radius + orb.radius {
                 // Collect the orb
                 commands.entity(orb_entity).despawn();
                 player.score += SCORE_PER_ORB;
 
-                // Optionally, grow the player or add segments
-                // ...
+                // Increase player's radius
+                player.radius += GROWTH_PER_ORB;
+
+                // Update the player's scale to reflect the new radius
+                player_transform.scale = Vec3::new(player.radius, player.radius, 1.0);
+
+                // Add a new segment
+                spawn_segment(
+                    &mut commands,
+                    &mut meshes,
+                    &mut materials,
+                    player_transform.translation,
+                    player.color,
+                    player.radius,
+                    player.segment_count,
+                );
+
+                // Increment the segment count
+                player.segment_count += 1;
             }
         }
     }
+}
+
+fn spawn_segment(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    position: Vec3,
+    color: Color,
+    radius: f32,
+    index: u32,
+)
+{
+    commands.spawn((
+        Segment { radius, index },
+        MaterialMesh2dBundle {
+            mesh: meshes.add(Circle::new(1.0)).into(),
+            material: materials.add(ColorMaterial::from(color)),
+            transform: Transform {
+                translation: position,
+                scale: Vec3::new(radius, radius, 1.0),
+                ..default()
+            },
+            ..default()
+        },
+    ));
+}
+
+pub fn update_score_text(player_query: Query<&Player>, mut text_query: Query<&mut Text, With<ScoreText>>)
+{
+    let player = player_query.single();
+    let mut text = text_query.single_mut();
+
+    text.sections[0].value = format!("Score: {}", player.score);
 }

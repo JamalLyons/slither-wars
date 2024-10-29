@@ -29,7 +29,7 @@ impl Default for GameSettings
         Self {
             map_radius: MAP_RADIUS,
             total_players: 1,
-            total_orbs: 50,
+            total_orbs: 500,
         }
     }
 }
@@ -45,6 +45,7 @@ pub struct Player
     pub color: Color,
     pub boost_timer: f32,     // Accumulates time for score deduction
     pub orb_spawn_timer: f32, // Controls orb spawn intervals during boosting
+    pub segment_count: u32,
 }
 
 impl Player
@@ -59,6 +60,7 @@ impl Player
             color,
             boost_timer: 0.0,
             orb_spawn_timer: 0.0,
+            segment_count: PLAYER_DEFAULT_LENGTH,
         }
     }
 }
@@ -68,6 +70,7 @@ impl Player
 pub struct Segment
 {
     pub radius: f32,
+    pub index: u32,
 }
 
 /// The history of the player's position
@@ -83,14 +86,17 @@ impl Default for PositionHistory
     fn default() -> Self
     {
         Self {
-            positions: VecDeque::with_capacity(MAX_SEGMENT_HISTORY),
+            positions: VecDeque::with_capacity(MAX_SEGMENT_HISTORY as usize),
         }
     }
 }
 
 /// An orb that the player can collect to increase their length
 #[derive(Component, Clone, Debug)]
-pub struct Orb;
+pub struct Orb
+{
+    pub radius: f32,
+}
 
 /// Despawn's all entities with the given component
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands)
