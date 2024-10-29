@@ -26,8 +26,7 @@ pub fn game_setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut 
     let player_entity = commands
         .spawn((
             Player::new("Player".to_string()),
-            Transform::default(),
-            GlobalTransform::default(),
+            SpatialBundle::default(),
             PositionHistory::default(),
         ))
         .id();
