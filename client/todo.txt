@@ -1,14 +1,14 @@
-- add ai bot players
-- add leaderboard to view top 10 players and there score (and support bots on there)
-- make complex movement system
+- add ai bot players (maybe https://github.com/victorb/dogoap will help?)
+- add a leaderboard to view top 10 players and their score (and support bots on there)
+- make a complex movement system
 - mini map system
 - Get/Create real game assets
 - Add game over screen
-- Make game menu do something useful and customize it
-- Add UI for customizing snake and username before games.
-- Allow custom single player gameplay. Players can create custom games like how many bots, the difficulty and the snake type
-- refactor game after prototype is done.
-    - I want to make the code a lot more 'feature flag' friendly and moduler. Right now everying is in one file and its hard to see small parts of the code.
+- Make the game menu do something useful and customize it
+- Add UI to customize snake and username before games.
+- Allow custom single-player gameplay. Players can create custom games like how many bots, the difficulty, and the snake type
+- refactor game after the prototype is done.
+    I want to make the code a lot more 'feature flag' friendly and modular. Right now, everything is in one file, and it's hard to see small parts of the code.
 - Add snake builder UI system
 - Add multiplayer lobby
 - Add mod system (allow loading custom snake assets like skins)
