@@ -166,7 +166,7 @@ pub fn move_player(
         // Stop boosting if score falls below threshold
         if player.score < SCORE_NEEDED_FOR_BOOSTING {
             is_boosting = false;
-            speed = PLAYER_SPEED; // Reset speed
+            speed = PLAYER_SPEED;
         }
 
         if is_boosting {

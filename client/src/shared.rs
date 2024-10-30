@@ -5,7 +5,7 @@ use rand::Rng;
 
 use crate::constants::*;
 
-#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States, Resource)]
 pub enum GameState
 {
     #[default]
