@@ -51,6 +51,7 @@ fn make_visible(mut window: Query<&mut Window>, frames: Res<FrameCount>)
 }
 
 /// Update winit config based on the current game state
+/// This keeps the game responsive, when removed fps is unstable for some reason lol
 fn update_winit(mode: Res<GameState>, mut winit_config: ResMut<WinitSettings>)
 {
     match *mode {
@@ -75,9 +76,9 @@ fn main()
         .insert_resource(GameState::default())
         .insert_resource(WinitSettings {
             focused_mode: bevy::winit::UpdateMode::Reactive {
-                wait: Duration::from_millis(100),
+                wait: Duration::from_millis(250),
                 react_to_device_events: false,
-                react_to_user_events: true,
+                react_to_user_events: false,
                 react_to_window_events: true,
             },
             unfocused_mode: bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(10)),
