@@ -16,6 +16,7 @@ pub const SCORE_NEEDED_FOR_BOOSTING: u32 = 5;
 pub const ORB_RADIUS: f32 = 5.0;
 pub const BOOST_ORB_RADIUS: f32 = 4.0;
 pub const ORB_SPAWN_DISTANCE_MARGIN: f32 = 1.0;
+pub const ORB_SPAWN_PER_PLAYER: usize = 50;
 
 pub const RADIUS_GROWTH_PER_STAGE: f32 = 2.5; // Amount to increase radius per stage
 pub const SCORE_PER_RADIUS_STAGE: u32 = 250; // Score required to increase radius

@@ -12,3 +12,4 @@
 - Add snake builder UI system
 - Add multiplayer lobby
 - Add mod system (allow loading custom snake assets like skins)
+- snake team system (team mode where players can join together to kill snakes without killing each other)

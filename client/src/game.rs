@@ -5,6 +5,9 @@ use crate::constants::*;
 use crate::shared::*;
 
 #[derive(Component)]
+struct GameWorld;
+
+#[derive(Component)]
 pub struct ScoreText;
 
 pub struct GamePlugin;
@@ -34,8 +37,9 @@ impl Plugin for GamePlugin
                 despawn_screen::<Player>,
                 despawn_screen::<Segment>,
                 despawn_screen::<Orb>,
-                despawn_screen::<ScoreText>,
                 despawn_screen::<PositionHistory>,
+                despawn_screen::<ScoreText>,
+                despawn_screen::<GameWorld>,
             ),
         );
     }
@@ -50,6 +54,7 @@ pub fn game_setup(
 {
     // Spawn the map boundary
     commands.spawn((
+        GameWorld,
         Name::new("Map Boundary"),
         MaterialMesh2dBundle {
             mesh: meshes.add(Circle::new(MAP_RADIUS)).into(),
@@ -345,7 +350,7 @@ fn spawn_orb(
 fn calculate_desired_orb_count(game_settings: &GameSettings) -> usize
 {
     // For example, set 20 orbs per player, adjust as needed
-    let base_orbs = 20 * game_settings.total_players;
+    let base_orbs = ORB_SPAWN_PER_PLAYER * game_settings.total_players;
 
     // Cap or adjust total orbs based on map size or other factors if needed
     base_orbs.min(game_settings.total_orbs)
