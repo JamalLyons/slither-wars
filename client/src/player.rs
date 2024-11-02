@@ -1,11 +1,13 @@
 use std::collections::VecDeque;
 
 use bevy::prelude::*;
+use bevy::sprite::MaterialMesh2dBundle;
 
 use crate::constants::*;
 use crate::enums::GameState;
 use crate::orb::spawn_orb;
 use crate::segments::{remove_segments, PositionHistory, Segment};
+use crate::utils::{generate_random_color, generate_random_position_within_radius};
 
 #[derive(Component, Clone, Debug)]
 pub struct Player
@@ -36,6 +38,53 @@ impl Player
             segment_count: 0,
             segments: VecDeque::with_capacity(MAX_GROWTH_LIMIT as usize),
         }
+    }
+}
+
+pub fn setup_player(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+)
+{
+    // Spawn the Player entity
+    let player_color = generate_random_color();
+    let player_spawn_localtion = generate_random_position_within_radius(MAP_RADIUS);
+    let player_size = Vec3::new(PLAYER_DEFAULT_RADIUS, PLAYER_DEFAULT_RADIUS, 1.0);
+
+    commands.spawn((
+        Player::new("Player".to_string(), player_color),
+        MaterialMesh2dBundle {
+            mesh: meshes.add(Circle::new(1.0)).into(),
+            material: materials.add(ColorMaterial::from(player_color)),
+            transform: Transform {
+                scale: player_size, // Scale to initial radius
+                translation: player_spawn_localtion.extend(0.0),
+                ..default()
+            },
+            ..default()
+        },
+        PositionHistory::default(),
+    ));
+
+    // Spawn segments and attach them to the player
+    for i in 0..PLAYER_DEFAULT_LENGTH {
+        commands.spawn((
+            Segment {
+                radius: PLAYER_DEFAULT_RADIUS,
+                index: i,
+            },
+            MaterialMesh2dBundle {
+                mesh: meshes.add(Circle::new(1.0)).into(),
+                material: materials.add(player_color),
+                transform: Transform {
+                    translation: Vec3::new(-(i as f32) * SEGMENT_SPACING, 0.0, 0.0),
+                    scale: player_size,
+                    ..default()
+                },
+                ..default()
+            },
+        ));
     }
 }
 
