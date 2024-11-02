@@ -13,3 +13,21 @@
 - Add multiplayer lobby
 - Add mod system (allow loading custom snake assets like skins)
 - snake team system (team mode where players can join together to kill snakes without killing each other)
+
+extra notes:
+
+https://github.com/EkardNT/bevy-tokio-tasks
+
+
+Ideas: 
+
+1. User Auth & Community
+
+We can use a web portal for user accounts
+after auth a user is given a token they cant submit 
+to the desktop client to authenticate. Only one user 
+can use a token at a time. When a token is submitted 
+we collect info on the user device. The user can reset
+a token to stop it from being used.
+
+Without a token the user will not be able to join multiplayer.
