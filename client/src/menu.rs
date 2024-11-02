@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::shared::GameState;
+use crate::enums::GameState;
 
 // One of the two settings that can be set through the menu. It will be a resource in the app
 #[derive(Resource, Debug, Component, PartialEq, Eq, Clone, Copy, Default)]
@@ -34,7 +34,7 @@ mod splash
 {
     use bevy::prelude::*;
 
-    use crate::shared::*;
+    use crate::{enums::GameState, utils::despawn_screen};
 
     // This plugin will display a splash screen with Bevy logo for 1 second before switching to the menu
     pub fn splash_plugin(app: &mut App)
@@ -106,8 +106,9 @@ mod menu
     use bevy::prelude::*;
 
     use crate::constants::TEXT_COLOR;
+    use crate::enums::GameState;
     use crate::menu::{DisplayQuality, Volume};
-    use crate::shared::*;
+    use crate::utils::despawn_screen;
 
     // This plugin manages the menu, with 5 different screens:
     // - a main menu with "New Game", "Settings", "Quit"

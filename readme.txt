@@ -1,28 +1,3 @@
-a remake of the popular game http://slither.com but my own version
+a remake of the popular game http://slither.com but cooler
 
-The current tech stack for the game is below.
-
-Client: 
-
-- Bevy
-- wasm-bindgen
-- serde
-- serde_json
-
-Server:
-
-- Tokio
-- Tungstenite
-- serde
-- serde_json
-- uuid
-- rand
-- tracing
-- tracing-subscriber
-- futures
-- futures-util
-- futures-channel
-
-Database:
-
-- sqlite
+vlogging the dev stuff here: https://youtube.com/playlist?list=PLl0-VFGqwyIsKoDWvQjIzFQ_6N4BGwVqP&si=B7aqcA16GEuTIiu8

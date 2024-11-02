@@ -3,11 +3,15 @@
 #![allow(unused_variables)]
 
 mod fps;
-mod shared;
-
 mod constants;
 mod game;
 mod menu;
+mod player;
+mod settings;
+mod enums;
+mod segments;
+mod orb;
+mod utils;
 
 use std::time::Duration;
 
@@ -18,7 +22,8 @@ use bevy::prelude::*;
 use bevy::window::{PresentMode, WindowTheme};
 use bevy::winit::WinitSettings;
 use constants::*;
-use shared::GameState;
+
+use enums::GameState;
 
 pub fn setup_scene(mut commands: Commands)
 {
