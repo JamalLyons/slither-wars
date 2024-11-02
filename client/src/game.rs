@@ -2,7 +2,12 @@ use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 
 use crate::constants::*;
-use crate::shared::*;
+use crate::enums::GameState;
+use crate::orb::Orb;
+use crate::player::Player;
+use crate::segments::{PositionHistory, Segment};
+use crate::settings::GameSettings;
+use crate::utils::{despawn_screen, generate_random_color, generate_random_position_within_radius};
 
 #[derive(Component)]
 struct GameWorld;
@@ -194,7 +199,7 @@ pub fn move_player(
             player.orb_spawn_timer += delta_seconds;
 
             // Spawn orbs at intervals during boosting
-            if player.orb_spawn_timer >= PLAYER_ORB_SPAWN_INTERVAL {
+            if player.orb_spawn_timer >= ORB_SPAWN_INTERVAL {
                 if direction != Vec3::ZERO {
                     direction = direction.normalize();
                 } else {
@@ -219,7 +224,7 @@ pub fn move_player(
                     BOOST_ORB_RADIUS,
                 );
 
-                player.orb_spawn_timer -= PLAYER_ORB_SPAWN_INTERVAL;
+                player.orb_spawn_timer -= ORB_SPAWN_INTERVAL;
             }
         } else {
             // Reset timers when not boosting
