@@ -39,3 +39,7 @@ pub const MAP_RADIUS: f32 = 500.;
 
 /// Camera constants
 pub const CAM_LERP_FACTOR: f32 = 5.;
+
+/// Window settings constants
+pub const WINDOW_TITLE: &str = "Slither Wars Client";
+pub const WINDOW_NAME: &str = "slither-wars.app";

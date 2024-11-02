@@ -19,10 +19,11 @@ use bevy::core::FrameCount;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
-use bevy::window::{PresentMode, WindowTheme};
+use bevy::window::PresentMode;
 use bevy::winit::WinitSettings;
 use constants::*;
 use enums::GameState;
+use settings::GameSettings;
 
 pub fn setup_scene(mut commands: Commands)
 {
@@ -60,15 +61,15 @@ fn update_winit(mode: Res<GameState>, mut winit_config: ResMut<WinitSettings>)
 {
     match *mode {
         GameState::Menu => {
-            winit_config.focused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(10));
-            winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_secs(1));
+            winit_config.focused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(450));
+            winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_secs(5));
         }
         GameState::Game => {
             winit_config.focused_mode = bevy::winit::UpdateMode::Continuous;
-            winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(10));
+            winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(350));
         }
         GameState::Splash => {
-            winit_config.focused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(10));
+            winit_config.focused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(100));
             winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_secs(1));
         }
     }
@@ -77,6 +78,7 @@ fn update_winit(mode: Res<GameState>, mut winit_config: ResMut<WinitSettings>)
 fn main()
 {
     App::new()
+        .insert_resource(GameSettings::default())
         .insert_resource(GameState::default())
         .insert_resource(WinitSettings {
             focused_mode: bevy::winit::UpdateMode::Reactive {
@@ -90,24 +92,12 @@ fn main()
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
-                    title: "Slither Wars Client".into(),
-                    name: Some("slither-wars.app".into()),
+                    title: WINDOW_TITLE.into(),
+                    name: Some(WINDOW_NAME.into()),
                     resolution: (SCREEN_WIDTH, SCREEN_HEIGHT).into(),
-                    // Turns off vsync to maximize CPU/GPU usage
-                    present_mode: PresentMode::AutoVsync,
-                    // Tells wasm to resize the window according to the available canvas
-                    fit_canvas_to_parent: true,
-                    // Tells wasm not to override default event handling, like F5, Ctrl+R etc.
+                    present_mode: PresentMode::Fifo,
                     prevent_default_event_handling: false,
-                    window_theme: Some(WindowTheme::Dark),
-                    enabled_buttons: bevy::window::EnabledButtons {
-                        // maximize: true,
-                        ..Default::default()
-                    },
-                    // This will spawn an invisible window
-                    // The window will be made visible in the make_visible() system after 3 frames.
-                    // This is useful when you want to avoid the white window that shows up before the GPU is ready to render the app.
-                    visible: false,
+                    visible: false, // Hide the window until the gpu is ready
                     ..default()
                 }),
                 ..default()

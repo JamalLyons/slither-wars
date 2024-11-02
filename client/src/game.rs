@@ -6,7 +6,6 @@ use crate::enums::GameState;
 use crate::orb::{orb_collection_system, spawn_orbs_system, Orb};
 use crate::player::{move_player, Player};
 use crate::segments::{PositionHistory, Segment};
-use crate::settings::GameSettings;
 use crate::utils::{despawn_screen, generate_random_color};
 
 #[derive(Component)]
@@ -21,7 +20,6 @@ impl Plugin for GamePlugin
 {
     fn build(&self, app: &mut App)
     {
-        app.insert_resource(GameSettings::default());
         app.add_systems(OnEnter(GameState::Game), game_setup);
         app.add_systems(
             Update,
