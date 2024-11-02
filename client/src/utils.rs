@@ -1,4 +1,6 @@
-use bevy::{color::Color, math::Vec2, prelude::{Commands, Component, DespawnRecursiveExt, Entity, Query, With}};
+use bevy::color::Color;
+use bevy::math::Vec2;
+use bevy::prelude::{Commands, Component, DespawnRecursiveExt, Entity, Query, With};
 use rand::Rng;
 
 /// Despawn's all entities with the given component

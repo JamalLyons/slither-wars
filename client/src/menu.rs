@@ -34,7 +34,8 @@ mod splash
 {
     use bevy::prelude::*;
 
-    use crate::{enums::GameState, utils::despawn_screen};
+    use crate::enums::GameState;
+    use crate::utils::despawn_screen;
 
     // This plugin will display a splash screen with Bevy logo for 1 second before switching to the menu
     pub fn splash_plugin(app: &mut App)

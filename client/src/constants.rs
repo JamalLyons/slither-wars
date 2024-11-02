@@ -39,4 +39,3 @@ pub const MAP_RADIUS: f32 = 500.;
 
 /// Camera constants
 pub const CAM_LERP_FACTOR: f32 = 5.;
-

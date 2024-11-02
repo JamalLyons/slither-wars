@@ -2,15 +2,15 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-mod fps;
 mod constants;
+mod enums;
+mod fps;
 mod game;
 mod menu;
-mod player;
-mod settings;
-mod enums;
-mod segments;
 mod orb;
+mod player;
+mod segments;
+mod settings;
 mod utils;
 
 use std::time::Duration;
@@ -22,7 +22,6 @@ use bevy::prelude::*;
 use bevy::window::{PresentMode, WindowTheme};
 use bevy::winit::WinitSettings;
 use constants::*;
-
 use enums::GameState;
 
 pub fn setup_scene(mut commands: Commands)
