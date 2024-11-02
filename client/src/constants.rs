@@ -8,7 +8,7 @@ pub const MAX_GROWTH_LIMIT: u32 = 1000; // The most segments the player can have
 
 /// Orb spawning and scoring constants
 pub const ORB_SPAWN_PER_PLAYER: usize = 50;
-pub const ORB_SPAWN_INTERVAL: f32 = 1.; // Orb spawn interval during boosting
+pub const ORB_SPAWN_INTERVAL: f32 = 0.85; // Orb spawn interval during boosting
 pub const ORB_SPAWN_DISTANCE_MARGIN: f32 = 1.0;
 pub const SCORE_PER_ORB: u32 = 1;
 pub const SCORE_NEEDED_FOR_BOOSTING: u32 = 5;

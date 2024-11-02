@@ -6,7 +6,7 @@ use crate::enums::GameState;
 use crate::orb::{orb_collection_system, spawn_orbs_system, Orb};
 use crate::player::{move_player, Player};
 use crate::segments::{PositionHistory, Segment};
-use crate::utils::{despawn_screen, generate_random_color};
+use crate::utils::{despawn_screen, generate_random_color, generate_random_position_within_radius};
 
 #[derive(Component)]
 struct GameWorld;
@@ -37,12 +37,13 @@ impl Plugin for GamePlugin
         app.add_systems(
             OnExit(GameState::Game),
             (
+                despawn_screen::<GameWorld>,
                 despawn_screen::<Player>,
-                despawn_screen::<Segment>,
                 despawn_screen::<Orb>,
+                despawn_screen::<Segment>,
                 despawn_screen::<PositionHistory>,
                 despawn_screen::<ScoreText>,
-                despawn_screen::<GameWorld>,
+                despawn_screen::<Text>,
             ),
         );
     }
@@ -93,6 +94,7 @@ pub fn game_setup(
 
     // Spawn the Player entity
     let player_color = generate_random_color();
+    let player_spawn_localtion = generate_random_position_within_radius(MAP_RADIUS);
     let player_size = Vec3::new(PLAYER_DEFAULT_RADIUS, PLAYER_DEFAULT_RADIUS, 1.0);
 
     commands.spawn((
@@ -102,6 +104,7 @@ pub fn game_setup(
             material: materials.add(ColorMaterial::from(player_color)),
             transform: Transform {
                 scale: player_size, // Scale to initial radius
+                translation: player_spawn_localtion.extend(0.0),
                 ..default()
             },
             ..default()

@@ -61,15 +61,15 @@ fn update_winit(mode: Res<GameState>, mut winit_config: ResMut<WinitSettings>)
 {
     match *mode {
         GameState::Menu => {
-            winit_config.focused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(450));
-            winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_secs(5));
+            winit_config.focused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(10));
+            winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_secs(1));
         }
         GameState::Game => {
             winit_config.focused_mode = bevy::winit::UpdateMode::Continuous;
-            winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(350));
+            winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(10));
         }
         GameState::Splash => {
-            winit_config.focused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(100));
+            winit_config.focused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(10));
             winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_secs(1));
         }
     }
@@ -95,9 +95,10 @@ fn main()
                     title: WINDOW_TITLE.into(),
                     name: Some(WINDOW_NAME.into()),
                     resolution: (SCREEN_WIDTH, SCREEN_HEIGHT).into(),
-                    present_mode: PresentMode::Fifo,
+                    present_mode: PresentMode::AutoVsync,
+                    fit_canvas_to_parent: true,
                     prevent_default_event_handling: false,
-                    visible: false, // Hide the window until the gpu is ready
+                    visible: false, // Make this visible after later
                     ..default()
                 }),
                 ..default()
