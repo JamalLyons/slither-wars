@@ -1,4 +1,3 @@
 - NextJS for web portal and user management
-- Hono for serverless API (used by game and user auth)
 - Tokio + TCP for fast websoket server
-- mongodb atlas as the database platform
+- convex as the database platform (Server-Less API)
