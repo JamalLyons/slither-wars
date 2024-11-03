@@ -6,8 +6,8 @@ use bevy::sprite::MaterialMesh2dBundle;
 use crate::constants::*;
 use crate::enums::GameState;
 use crate::orb::spawn_orb;
-use crate::segments::{remove_segments, PositionHistory, Segment};
-use crate::utils::{generate_random_color, generate_random_position_within_radius};
+use crate::segments::{remove_player_segments, PositionHistory, Segment};
+use crate::utils::{calculate_player_radius, generate_random_color, generate_random_position_within_radius};
 
 #[derive(Component, Clone, Debug)]
 pub struct Player
@@ -17,8 +17,8 @@ pub struct Player
     pub length: u32,
     pub radius: f32,
     pub color: Color,
-    pub boost_timer: f32,     // Accumulates time for score deduction
-    pub orb_spawn_timer: f32, // Controls orb spawn intervals during boosting
+    pub boost_timer: f32,
+    pub orb_spawn_timer: f32,
     pub segment_count: u32,
     pub segments: VecDeque<Entity>,
 }
@@ -50,7 +50,7 @@ pub fn setup_player(
     // Spawn the Player entity
     let player_color = generate_random_color();
     let player_spawn_localtion = generate_random_position_within_radius(MAP_RADIUS);
-    let player_size = Vec3::new(PLAYER_DEFAULT_RADIUS, PLAYER_DEFAULT_RADIUS, 1.0);
+    let player_radius = Vec3::new(PLAYER_DEFAULT_RADIUS, PLAYER_DEFAULT_RADIUS, 1.0);
 
     commands.spawn((
         Player::new("Player".to_string(), player_color),
@@ -58,8 +58,8 @@ pub fn setup_player(
             mesh: meshes.add(Circle::new(1.0)).into(),
             material: materials.add(ColorMaterial::from(player_color)),
             transform: Transform {
-                scale: player_size, // Scale to initial radius
-                translation: player_spawn_localtion.extend(0.0),
+                scale: player_radius, // Scale to initial radius
+                translation: player_spawn_localtion.extend(Z_PLAYER_HEAD),
                 ..default()
             },
             ..default()
@@ -78,8 +78,8 @@ pub fn setup_player(
                 mesh: meshes.add(Circle::new(1.0)).into(),
                 material: materials.add(player_color),
                 transform: Transform {
-                    translation: Vec3::new(-(i as f32) * SEGMENT_SPACING, 0.0, 0.0),
-                    scale: player_size,
+                    translation: Vec3::new(-(i as f32) * SEGMENT_SPACING, 0.0, Z_PLAYER_SEGMENTS),
+                    scale: player_radius,
                     ..default()
                 },
                 ..default()
@@ -141,14 +141,14 @@ pub fn move_player(
             // Accumulate time for score deduction
             player.boost_timer += delta_seconds;
 
-            // Deduct score every 1 second of boosting
-            if player.boost_timer >= 1.0 {
+            // Deduct score every half second of boosting
+            if player.boost_timer >= 0.5 {
                 let score_deduction = player.boost_timer.floor() as u32;
                 player.score = player.score.saturating_sub(score_deduction);
                 player.boost_timer -= score_deduction as f32;
 
                 // Remove segments based on the score deduction
-                remove_segments(&mut commands, &mut player, score_deduction);
+                remove_player_segments(&mut commands, &mut player, score_deduction);
             }
 
             // Accumulate time for orb spawning
@@ -236,10 +236,4 @@ pub fn move_player(
             }
         }
     }
-}
-
-pub fn calculate_player_radius(score: u32) -> f32
-{
-    let stages = score / SCORE_PER_RADIUS_STAGE;
-    MIN_PLAYER_RADIUS + stages as f32 * RADIUS_GROWTH_PER_STAGE
 }

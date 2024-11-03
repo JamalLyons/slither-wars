@@ -50,3 +50,11 @@ pub const CAM_LERP_FACTOR: f32 = 5.;
 /// Window settings constants
 pub const WINDOW_TITLE: &str = "Slither Wars Client";
 pub const WINDOW_NAME: &str = "slither-wars.app";
+
+// Z-Ordering Constants
+pub const Z_BACKGROUND: f32 = -1.0;
+pub const Z_ORBS: f32 = 0.0;
+pub const Z_BOT_SEGMENTS: f32 = 0.5;
+pub const Z_BOT_HEAD: f32 = 0.6;
+pub const Z_PLAYER_SEGMENTS: f32 = 0.8;
+pub const Z_PLAYER_HEAD: f32 = 1.0;

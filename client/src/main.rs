@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+mod bot;
 mod constants;
 mod enums;
 mod fps;

@@ -1,12 +1,15 @@
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 
+use crate::bot::{bot_setup, move_bots, Bot};
 use crate::constants::*;
 use crate::enums::GameState;
-use crate::orb::{orb_collection_system, spawn_orbs_system, Orb};
-use crate::player::{move_player, Player};
+use crate::orb;
+use crate::orb::{orb_collection_system, orb_setup, Orb};
+use crate::player::{move_player, setup_player, Player};
 use crate::segments::{PositionHistory, Segment};
-use crate::utils::{despawn_screen, generate_random_color, generate_random_position_within_radius};
+use crate::settings::GameSettings;
+use crate::utils::despawn_screen;
 
 #[derive(Component)]
 struct GameWorld;
@@ -21,13 +24,15 @@ impl Plugin for GamePlugin
     fn build(&self, app: &mut App)
     {
         app.add_systems(OnEnter(GameState::Game), game_setup);
+        app.add_systems(OnEnter(GameState::Game), orb_setup);
         app.add_systems(
             Update,
             (
+                collision_system,
+                move_bots,
                 move_player,
-                update_camera,
-                spawn_orbs_system,
                 orb_collection_system,
+                update_camera,
                 update_score_text,
             )
                 .chain()
@@ -39,11 +44,11 @@ impl Plugin for GamePlugin
             (
                 despawn_screen::<GameWorld>,
                 despawn_screen::<Player>,
+                despawn_screen::<Bot>,
                 despawn_screen::<Orb>,
                 despawn_screen::<Segment>,
                 despawn_screen::<PositionHistory>,
                 despawn_screen::<ScoreText>,
-                despawn_screen::<Text>,
             ),
         );
     }
@@ -54,6 +59,7 @@ pub fn game_setup(
     asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    game_settings: Res<GameSettings>,
 )
 {
     // Spawn the map boundary
@@ -64,7 +70,7 @@ pub fn game_setup(
             mesh: meshes.add(Circle::new(MAP_RADIUS)).into(),
             material: materials.add(Color::srgb(0.1, 0.1, 0.1)),
             transform: Transform {
-                translation: Vec3::new(0.0, 0.0, -1.0), // Set z to -1.0
+                translation: Vec3::new(0.0, 0.0, Z_BACKGROUND), // Set z to -1.0
                 ..default()
             },
             ..default()
@@ -92,45 +98,9 @@ pub fn game_setup(
         }),
     ));
 
-    // Spawn the Player entity
-    let player_color = generate_random_color();
-    let player_spawn_localtion = generate_random_position_within_radius(MAP_RADIUS);
-    let player_size = Vec3::new(PLAYER_DEFAULT_RADIUS, PLAYER_DEFAULT_RADIUS, 1.0);
-
-    commands.spawn((
-        Player::new("Player".to_string(), player_color),
-        MaterialMesh2dBundle {
-            mesh: meshes.add(Circle::new(1.0)).into(),
-            material: materials.add(ColorMaterial::from(player_color)),
-            transform: Transform {
-                scale: player_size, // Scale to initial radius
-                translation: player_spawn_localtion.extend(0.0),
-                ..default()
-            },
-            ..default()
-        },
-        PositionHistory::default(),
-    ));
-
-    // Spawn segments and attach them to the player
-    for i in 0..PLAYER_DEFAULT_LENGTH {
-        commands.spawn((
-            Segment {
-                radius: PLAYER_DEFAULT_RADIUS,
-                index: i,
-            },
-            MaterialMesh2dBundle {
-                mesh: meshes.add(Circle::new(1.0)).into(),
-                material: materials.add(player_color),
-                transform: Transform {
-                    translation: Vec3::new(-(i as f32) * SEGMENT_SPACING, 0.0, 0.0),
-                    scale: player_size,
-                    ..default()
-                },
-                ..default()
-            },
-        ));
-    }
+    // todo - see why spawning bots makes our player look glichy af ???
+    bot_setup(&mut commands, &mut meshes, &mut materials, &game_settings);
+    setup_player(&mut commands, &mut meshes, &mut materials);
 }
 
 /// Update the camera position by tracking the player.
@@ -153,10 +123,44 @@ fn update_camera(
     camera.translation = camera.translation.lerp(target, time.delta_seconds() * CAM_LERP_FACTOR);
 }
 
-pub fn update_score_text(player_query: Query<&Player>, mut text_query: Query<&mut Text, With<ScoreText>>)
+pub fn update_score_text(mut player_query: Query<&Player>, mut text_query: Query<&mut Text, With<ScoreText>>)
 {
-    let player = player_query.single();
-    let mut text = text_query.single_mut();
+    if let Ok(mut player) = player_query.get_single_mut() {
+        if let Ok(mut text) = text_query.get_single_mut() {
+            text.sections[0].value = format!("Score: {}", player.score);
+        }
+    }
+}
 
-    text.sections[0].value = format!("Score: {}", player.score);
+pub fn collision_system(
+    mut commands: Commands,
+    mut player_query: Query<(Entity, &Transform, &mut Player)>,
+    bot_query: Query<(Entity, &Transform, &Bot)>,
+    mut game_state: ResMut<NextState<GameState>>,
+)
+{
+    if let Ok((player_entity, player_transform, mut player)) = player_query.get_single_mut() {
+        for (bot_entity, bot_transform, bot) in bot_query.iter() {
+            let distance = player_transform
+                .translation
+                .truncate()
+                .distance(bot_transform.translation.truncate());
+
+            if distance < player.radius + bot.radius {
+                println!("Player collided with bot {}!", bot.name);
+
+                // Despawn the player and their segments
+                // todo drop food on player death
+                commands.entity(player_entity).despawn_recursive();
+                for segment_entity in player.segments.iter() {
+                    commands.entity(*segment_entity).despawn_recursive();
+                }
+
+                // Transition to Game Over state or handle accordingly
+                // game_state.set(GameState::Menu);
+
+                break;
+            }
+        }
+    }
 }
