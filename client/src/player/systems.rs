@@ -212,7 +212,6 @@ pub fn collect_orb(
                 .distance(orb_transform.translation.truncate());
 
             if distance < player.radius + orb.radius {
-
                 commands.entity(orb_entity).despawn();
                 player.score += SCORE_PER_ORB;
 
@@ -224,7 +223,7 @@ pub fn collect_orb(
                     player.color,
                     player.radius,
                     player.segment_count,
-                    false
+                    false,
                 );
 
                 player.segments.push_back(segment_entity);
