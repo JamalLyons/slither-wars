@@ -17,7 +17,7 @@ pub const BOOST_ORB_RADIUS: f32 = 4.0;
 pub const MAX_ORB_SPAWN_COUNT: usize = 5000;
 
 /// Orb spawning and scoring constants
-pub const ORB_SPAWN_PER_PLAYER: usize = 10_000;
+pub const ORB_SPAWN_PER_PLAYER: usize = 100;
 pub const ORB_SPAWN_INTERVAL: f32 = 0.6; // Orb spawn interval during boosting
 pub const ORB_SPAWN_DISTANCE_MARGIN: f32 = 1.0;
 pub const SCORE_PER_ORB: u32 = 1;
@@ -31,7 +31,7 @@ pub const BOT_SPEED: f32 = 100.0;
 pub const BOT_DIRECTION_CHANGE_CHANCE: f32 = 0.02; // Adjust as needed
 
 /// Radius growth constants
-pub const RADIUS_GROWTH_PER_STAGE: f32 = 2.5; // Amount to increase radius per stage
+pub const RADIUS_GROWTH_PER_STAGE: f32 = 2.0; // Amount to increase radius per stage
 pub const SCORE_PER_RADIUS_STAGE: u32 = 250; // Score required to increase radius
 pub const MIN_PLAYER_RADIUS: f32 = 12.5; // Minimum player radius
 
@@ -42,7 +42,7 @@ pub const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 pub const SCREEN_WIDTH: f32 = 1000.;
 pub const SCREEN_HEIGHT: f32 = 700.;
 
-pub const MAP_RADIUS: f32 = 1000.;
+pub const MAP_RADIUS: f32 = 500.;
 
 /// Camera constants
 pub const CAM_LERP_FACTOR: f32 = 5.;
