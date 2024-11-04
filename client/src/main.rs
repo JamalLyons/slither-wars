@@ -3,9 +3,12 @@
 #![allow(unused_variables)]
 
 mod constants;
-mod player;
+mod resources;
 mod systems;
 mod utils;
+
+mod orb;
+mod player;
 
 use std::time::Duration;
 
@@ -14,6 +17,7 @@ use bevy::prelude::*;
 use bevy::window::PresentMode;
 use bevy::winit::WinitSettings;
 use bevy_dev_tools::fps_overlay::FpsOverlayPlugin;
+use resources::GlobalGameState;
 
 use crate::constants::*;
 use crate::systems::*;
@@ -31,6 +35,7 @@ fn main()
             // When the window is not focused, the game will run at lower fps.
             unfocused_mode: bevy::winit::UpdateMode::reactive_low_power(Duration::from_secs(10)),
         })
+        .insert_resource(GlobalGameState::default())
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
@@ -50,6 +55,7 @@ fn main()
         ))
         .add_plugins(FpsOverlayPlugin::default())
         .add_plugins(player::PlayerPlugin)
+        .add_plugins(orb::OrbPlugin)
         .add_systems(Startup, (spawn_camera, spawn_game_world))
         .add_systems(Update, make_window_visible)
         .run();

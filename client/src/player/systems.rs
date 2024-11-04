@@ -3,9 +3,17 @@ use bevy::sprite::MaterialMesh2dBundle;
 
 use super::components::*;
 use crate::constants::*;
+use crate::orb::components::Orb;
+use crate::orb::systems::spawn_singlular_orb;
+use crate::resources::GlobalGameState;
 use crate::utils::*;
 
-pub fn spawn_player(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>)
+pub fn spawn_player(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut global_game_state: ResMut<GlobalGameState>,
+)
 {
     let player_name = "Player".to_string();
     let player_color = generate_random_color();
@@ -45,9 +53,14 @@ pub fn spawn_player(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mu
             },
         ));
     }
+
+    global_game_state.total_snakes += 1;
 }
 
 pub fn move_player(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_query: Query<(&mut Transform, &mut SegmentPositionHistory, &mut Player), With<Player>>,
@@ -78,27 +91,20 @@ pub fn move_player(
             is_boosting = true;
         }
 
-        // Stop boosting if score falls below threshold
-        if player.score < SCORE_NEEDED_FOR_BOOSTING {
-            is_boosting = false;
-            speed = PLAYER_SPEED;
-        }
-
         if is_boosting {
             speed *= 2.0;
-            
-             // Accumulate time for score deduction
-             player.boost_timer += delta_seconds;
 
-             // Deduct score every half second of boosting
+            // Accumulate time for score deduction
+            player.boost_timer += delta_seconds;
+
+            // Deduct score every half second of boosting
             if player.boost_timer >= 0.5 {
                 let score_deduction = player.boost_timer.floor() as u32;
                 player.score = player.score.saturating_sub(score_deduction);
                 player.boost_timer -= score_deduction as f32;
 
                 // Remove segments based on the score deduction
-                // todo - implement this
-                // remove_player_segments(&mut commands, &mut player, score_deduction);
+                remove_segment(&mut commands, &mut player, score_deduction);
             }
 
             // Accumulate time for orb spawning
@@ -121,15 +127,14 @@ pub fn move_player(
                 let orb_position =
                     player_transform.translation - direction * (collection_threshold + ORB_SPAWN_DISTANCE_MARGIN);
 
-                // todo - implement this
-                // spawn_orb(
-                //     &mut commands,
-                //     &mut meshes,
-                //     &mut materials,
-                //     player.color,
-                //     orb_position.truncate(),
-                //     BOOST_ORB_RADIUS,
-                // );
+                spawn_singlular_orb(
+                    &mut commands,
+                    &mut meshes,
+                    &mut materials,
+                    player.color,
+                    orb_position.truncate(),
+                    BOOST_ORB_RADIUS,
+                );
 
                 player.orb_spawn_timer -= ORB_SPAWN_INTERVAL;
             }
@@ -158,7 +163,7 @@ pub fn move_player(
             segment_history.positions.push_front(player_transform.translation);
 
             // If player has exceeded the segment history limit, remove the oldest position
-            if segment_history.positions.len() > MAX_SEGMENT_HISTORY  {
+            if segment_history.positions.len() > MAX_SEGMENT_HISTORY {
                 segment_history.positions.pop_back();
             }
         }
@@ -191,7 +196,89 @@ pub fn move_player(
     }
 }
 
+pub fn collect_orb(
+    mut commands: Commands,
+    mut player_query: Query<(&mut Transform, &mut Player), Without<Orb>>,
+    orb_query: Query<(Entity, &Transform, &Orb), Without<Player>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+)
+{
+    for (player_transform, mut player) in player_query.iter_mut() {
+        for (orb_entity, orb_transform, orb) in orb_query.iter() {
+            let distance = player_transform
+                .translation
+                .truncate()
+                .distance(orb_transform.translation.truncate());
+
+            if distance < player.radius + orb.radius {
+
+                commands.entity(orb_entity).despawn();
+                player.score += SCORE_PER_ORB;
+
+                let segment_entity = add_segment(
+                    &mut commands,
+                    &mut meshes,
+                    &mut materials,
+                    player_transform.translation,
+                    player.color,
+                    player.radius,
+                    player.segment_count,
+                    false
+                );
+
+                player.segments.push_back(segment_entity);
+                player.segment_count += 1;
+            }
+        }
+    }
+}
+
+pub fn add_segment(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
+    position: Vec3,
+    color: Color,
+    radius: f32,
+    index: u32,
+    is_bot: bool,
+) -> Entity
+{
+    let z_index = if is_bot { Z_BOT_SEGMENTS } else { Z_PLAYER_SEGMENTS };
+
+    commands
+        .spawn((
+            Segment { radius, index },
+            MaterialMesh2dBundle {
+                mesh: meshes.add(Circle::new(1.0)).into(),
+                material: materials.add(ColorMaterial::from(color)),
+                transform: Transform {
+                    translation: position,
+                    scale: Vec3::new(radius, radius, z_index),
+                    ..default()
+                },
+                ..default()
+            },
+        ))
+        .id()
+}
+
+pub fn remove_segment(commands: &mut Commands, player: &mut Player, segments_to_remove: u32)
+{
+    let segments_to_remove = segments_to_remove.min(player.segment_count);
+
+    for _ in 0..segments_to_remove {
+        let segment_entity = player.segments.pop_back();
+        if let Some(entity) = segment_entity {
+            commands.entity(entity).despawn();
+            player.segment_count -= 1;
+        }
+    }
+}
+
 /// Updates the player's camera to follow the player in the world
+/// todo - make the player camera zoom start small and scale with the player's radius in the future
 pub fn update_player_camera(
     mut camera_query: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
     player_query: Query<&Transform, (With<Player>, Without<Camera2d>)>,
@@ -232,6 +319,15 @@ pub fn spawn_score_text(mut commands: Commands, asset_server: Res<AssetServer>)
             ..default()
         }),
     ));
+}
+
+pub fn update_score_text(mut player_query: Query<&Player>, mut text_query: Query<&mut Text, With<ScoreText>>)
+{
+    if let Ok(mut player) = player_query.get_single_mut() {
+        if let Ok(mut text) = text_query.get_single_mut() {
+            text.sections[0].value = format!("Score: {}", player.score);
+        }
+    }
 }
 
 pub fn calculate_player_radius(score: u32) -> f32

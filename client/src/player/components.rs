@@ -17,7 +17,8 @@ pub struct Player
     pub color: Color,
     pub boost_timer: f32,
     pub orb_spawn_timer: f32,
-    pub segments: VecDeque<Segment>,
+    pub segment_count: u32,
+    pub segments: VecDeque<Entity>,
 }
 
 impl Player
@@ -32,6 +33,7 @@ impl Player
             color,
             boost_timer: 0.0,
             orb_spawn_timer: 0.0,
+            segment_count: 0,
             segments: VecDeque::new(),
         }
     }
@@ -43,7 +45,6 @@ pub struct Segment
     pub index: u32,
     pub radius: f32,
 }
-
 
 #[derive(Component, Clone, Debug)]
 pub struct SegmentPositionHistory
