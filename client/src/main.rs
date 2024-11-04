@@ -2,93 +2,34 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-mod bot;
 mod constants;
-mod enums;
-mod fps;
-mod game;
-mod menu;
-mod orb;
 mod player;
-mod segments;
-mod settings;
+mod systems;
 mod utils;
 
 use std::time::Duration;
 
-use bevy::core::FrameCount;
-use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::window::PresentMode;
 use bevy::winit::WinitSettings;
-use constants::*;
-use enums::GameState;
-use settings::GameSettings;
+use bevy_dev_tools::fps_overlay::FpsOverlayPlugin;
 
-pub fn setup_scene(mut commands: Commands)
-{
-    // Setup the camera.
-    // This needs to be spawned before anything else.
-    commands.spawn((
-        Camera2dBundle {
-            camera: Camera {
-                hdr: true, // HDR is required for the bloom effect
-                ..default()
-            },
-            ..default()
-        },
-        BloomSettings::NATURAL,
-    ));
-}
-
-/// Make the window visible in the next 3 frames.
-/// We use this to avoid the white window that shows up before the GPU is ready to render the app.
-/// This happens so fast the the user will not see it.
-fn make_visible(mut window: Query<&mut Window>, frames: Res<FrameCount>)
-{
-    // The delay may be different for your app or system.
-    if frames.0 == 3 {
-        // At this point the gpu is ready to show the app so we can make the window visible.
-        // Alternatively, you could toggle the visibility in Startup.
-        // It will work, but it will have one white frame before it starts rendering
-        window.single_mut().visible = true;
-    }
-}
-
-/// Update winit config based on the current game state
-/// This keeps the game responsive, when removed fps is unstable for some reason lol
-fn update_winit(mode: Res<GameState>, mut winit_config: ResMut<WinitSettings>)
-{
-    match *mode {
-        GameState::Menu => {
-            winit_config.focused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(10));
-            winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_secs(1));
-        }
-        GameState::Game => {
-            winit_config.focused_mode = bevy::winit::UpdateMode::Continuous;
-            winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(10));
-        }
-        GameState::Splash => {
-            winit_config.focused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(10));
-            winit_config.unfocused_mode = bevy::winit::UpdateMode::reactive_low_power(Duration::from_secs(1));
-        }
-    }
-}
+use crate::constants::*;
+use crate::systems::*;
 
 fn main()
 {
     App::new()
-        .insert_resource(GameSettings::default())
-        .insert_resource(GameState::default())
+        // Custom window settings
         .insert_resource(WinitSettings {
-            focused_mode: bevy::winit::UpdateMode::Reactive {
-                wait: Duration::from_millis(250),
-                react_to_device_events: false,
-                react_to_user_events: false,
-                react_to_window_events: true,
-            },
-            unfocused_mode: bevy::winit::UpdateMode::reactive_low_power(Duration::from_millis(10)),
+            // When the main window is focused, I want to run the game at max speeds.
+            // later when I add a working menu, I will make it so this is configued
+            // for optimal performance when not in game.
+            // see - https://github.com/bevyengine/bevy/blob/release-0.14.2/examples/window/low_power.rs
+            focused_mode: bevy::winit::UpdateMode::Continuous,
+            // When the window is not focused, the game will run at lower fps.
+            unfocused_mode: bevy::winit::UpdateMode::reactive_low_power(Duration::from_secs(10)),
         })
         .add_plugins((
             DefaultPlugins.set(WindowPlugin {
@@ -107,10 +48,9 @@ fn main()
             LogDiagnosticsPlugin::default(),
             FrameTimeDiagnosticsPlugin,
         ))
-        .add_plugins(fps::FpsPlugin)
-        .add_plugins(menu::GameMenuPlugin)
-        .add_plugins(game::GamePlugin)
-        .add_systems(Startup, setup_scene)
-        .add_systems(Update, (make_visible, update_winit))
+        .add_plugins(FpsOverlayPlugin::default())
+        .add_plugins(player::PlayerPlugin)
+        .add_systems(Startup, (spawn_camera, spawn_game_world))
+        .add_systems(Update, make_window_visible)
         .run();
 }

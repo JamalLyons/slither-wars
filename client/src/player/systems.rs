@@ -1,85 +1,44 @@
-use std::collections::VecDeque;
-
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 
+use super::components::*;
 use crate::constants::*;
-use crate::enums::GameState;
-use crate::orb::spawn_orb;
-use crate::segments::{remove_player_segments, PositionHistory, Segment};
-use crate::utils::{calculate_player_radius, generate_random_color, generate_random_position_within_radius};
+use crate::utils::*;
 
-#[derive(Component, Clone, Debug)]
-pub struct Player
+pub fn spawn_player(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>)
 {
-    pub name: String,
-    pub score: u32,
-    pub length: u32,
-    pub radius: f32,
-    pub color: Color,
-    pub boost_timer: f32,
-    pub orb_spawn_timer: f32,
-    pub segment_count: u32,
-    pub segments: VecDeque<Entity>,
-}
-
-impl Player
-{
-    pub fn new(name: String, color: Color) -> Self
-    {
-        Self {
-            name,
-            score: 0,
-            length: PLAYER_DEFAULT_LENGTH,
-            radius: PLAYER_DEFAULT_RADIUS,
-            color,
-            boost_timer: 0.0,
-            orb_spawn_timer: 0.0,
-            segment_count: 0,
-            segments: VecDeque::with_capacity(MAX_GROWTH_LIMIT as usize),
-        }
-    }
-}
-
-pub fn setup_player(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
-)
-{
-    // Spawn the Player entity
+    let player_name = "Player".to_string();
     let player_color = generate_random_color();
     let player_spawn_localtion = generate_random_position_within_radius(MAP_RADIUS);
-    let player_radius = Vec3::new(PLAYER_DEFAULT_RADIUS, PLAYER_DEFAULT_RADIUS, 1.0);
+    let player_size = Vec3::new(PLAYER_DEFAULT_RADIUS, PLAYER_DEFAULT_RADIUS, Z_PLAYER_SEGMENTS);
 
     commands.spawn((
-        Player::new("Player".to_string(), player_color),
+        Player::new(player_name.clone(), player_color),
         MaterialMesh2dBundle {
             mesh: meshes.add(Circle::new(1.0)).into(),
             material: materials.add(ColorMaterial::from(player_color)),
             transform: Transform {
-                scale: player_radius, // Scale to initial radius
-                translation: player_spawn_localtion.extend(Z_PLAYER_HEAD),
+                scale: player_size, // Scale to initial radius
+                translation: player_spawn_localtion.extend(Z_PLAYER_SEGMENTS),
                 ..default()
             },
             ..default()
         },
-        PositionHistory::default(),
+        SegmentPositionHistory::default(),
     ));
 
-    // Spawn segments and attach them to the player
     for i in 0..PLAYER_DEFAULT_LENGTH {
         commands.spawn((
             Segment {
-                radius: PLAYER_DEFAULT_RADIUS,
                 index: i,
+                radius: PLAYER_DEFAULT_RADIUS,
             },
             MaterialMesh2dBundle {
                 mesh: meshes.add(Circle::new(1.0)).into(),
                 material: materials.add(player_color),
                 transform: Transform {
                     translation: Vec3::new(-(i as f32) * SEGMENT_SPACING, 0.0, Z_PLAYER_SEGMENTS),
-                    scale: player_radius,
+                    scale: player_size,
                     ..default()
                 },
                 ..default()
@@ -89,24 +48,16 @@ pub fn setup_player(
 }
 
 pub fn move_player(
-    mut commands: Commands,
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut game_state: ResMut<NextState<GameState>>,
-    mut player_query: Query<(&mut Transform, &mut PositionHistory, &mut Player), With<Player>>,
+    mut player_query: Query<(&mut Transform, &mut SegmentPositionHistory, &mut Player), With<Player>>,
     mut segment_query: Query<(&mut Transform, &Segment), Without<Player>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
 )
 {
-    // End game if escape is pressed
-    if keyboard_input.just_pressed(KeyCode::Escape) {
-        game_state.set(GameState::Menu);
-    }
-
-    for (mut player_transform, mut history, mut player) in player_query.iter_mut() {
+    for (mut player_transform, mut segment_history, mut player) in player_query.iter_mut() {
         let mut direction = Vec3::ZERO;
         let mut speed = PLAYER_SPEED;
+        let delta_seconds = time.delta_seconds();
 
         if keyboard_input.pressed(KeyCode::ArrowUp) {
             direction.y += 1.0;
@@ -120,8 +71,6 @@ pub fn move_player(
         if keyboard_input.pressed(KeyCode::ArrowRight) {
             direction.x += 1.0;
         }
-
-        let delta_seconds = time.delta_seconds();
 
         let mut is_boosting = false;
 
@@ -137,18 +86,19 @@ pub fn move_player(
 
         if is_boosting {
             speed *= 2.0;
+            
+             // Accumulate time for score deduction
+             player.boost_timer += delta_seconds;
 
-            // Accumulate time for score deduction
-            player.boost_timer += delta_seconds;
-
-            // Deduct score every half second of boosting
+             // Deduct score every half second of boosting
             if player.boost_timer >= 0.5 {
                 let score_deduction = player.boost_timer.floor() as u32;
                 player.score = player.score.saturating_sub(score_deduction);
                 player.boost_timer -= score_deduction as f32;
 
                 // Remove segments based on the score deduction
-                remove_player_segments(&mut commands, &mut player, score_deduction);
+                // todo - implement this
+                // remove_player_segments(&mut commands, &mut player, score_deduction);
             }
 
             // Accumulate time for orb spawning
@@ -160,7 +110,7 @@ pub fn move_player(
                     direction = direction.normalize();
                 } else {
                     // Use previous movement direction
-                    direction = history
+                    direction = segment_history
                         .positions
                         .get(1)
                         .map_or(Vec3::ZERO, |prev_pos| (player_transform.translation - *prev_pos).normalize());
@@ -171,14 +121,15 @@ pub fn move_player(
                 let orb_position =
                     player_transform.translation - direction * (collection_threshold + ORB_SPAWN_DISTANCE_MARGIN);
 
-                spawn_orb(
-                    &mut commands,
-                    &mut meshes,
-                    &mut materials,
-                    player.color,
-                    orb_position.truncate(),
-                    BOOST_ORB_RADIUS,
-                );
+                // todo - implement this
+                // spawn_orb(
+                //     &mut commands,
+                //     &mut meshes,
+                //     &mut materials,
+                //     player.color,
+                //     orb_position.truncate(),
+                //     BOOST_ORB_RADIUS,
+                // );
 
                 player.orb_spawn_timer -= ORB_SPAWN_INTERVAL;
             }
@@ -204,16 +155,18 @@ pub fn move_player(
             }
 
             // Record position
-            history.positions.push_front(player_transform.translation);
-            if history.positions.len() > MAX_SEGMENT_HISTORY as usize {
-                history.positions.pop_back();
+            segment_history.positions.push_front(player_transform.translation);
+
+            // If player has exceeded the segment history limit, remove the oldest position
+            if segment_history.positions.len() > MAX_SEGMENT_HISTORY  {
+                segment_history.positions.pop_back();
             }
         }
 
         // Record player's position
-        history.positions.push_front(player_transform.translation);
-        if history.positions.len() > MAX_SEGMENT_HISTORY as usize {
-            history.positions.pop_back();
+        segment_history.positions.push_front(player_transform.translation);
+        if segment_history.positions.len() > MAX_SEGMENT_HISTORY as usize {
+            segment_history.positions.pop_back();
         }
 
         let new_radius = calculate_player_radius(player.score);
@@ -221,19 +174,68 @@ pub fn move_player(
         // Update the player's radius and scale if it has changed
         if (new_radius - player.radius).abs() > f32::EPSILON {
             player.radius = new_radius;
-            player_transform.scale = Vec3::new(player.radius, player.radius, 1.0);
+            player_transform.scale = Vec3::new(player.radius, player.radius, Z_PLAYER_SEGMENTS);
         }
 
-        // Update segments
+        // Update the player's segments
         for (mut segment_transform, segment) in segment_query.iter_mut() {
             let index = (segment.index + 1) * POSITIONS_PER_SEGMENT;
-            if index < history.positions.len().try_into().unwrap() {
-                segment_transform.translation = history.positions[index as usize];
+            if index < segment_history.positions.len().try_into().unwrap() {
+                segment_transform.translation = segment_history.positions[index as usize];
                 // Ensure the segment's scale matches the player's radius
-                segment_transform.scale = Vec3::new(player.radius, player.radius, 1.0);
+                segment_transform.scale = Vec3::new(player.radius, player.radius, Z_PLAYER_SEGMENTS);
             } else {
                 segment_transform.translation = player_transform.translation;
             }
         }
     }
+}
+
+/// Updates the player's camera to follow the player in the world
+pub fn update_player_camera(
+    mut camera_query: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
+    player_query: Query<&Transform, (With<Player>, Without<Camera2d>)>,
+    time: Res<Time>,
+)
+{
+    let Ok(mut camera) = camera_query.get_single_mut() else {
+        return;
+    };
+
+    let Ok(player) = player_query.get_single() else {
+        return;
+    };
+
+    let target = Vec3::new(player.translation.x, player.translation.y, camera.translation.z);
+
+    camera.translation = camera.translation.lerp(target, time.delta_seconds() * CAM_LERP_FACTOR);
+}
+
+pub fn spawn_score_text(mut commands: Commands, asset_server: Res<AssetServer>)
+{
+    commands.spawn((
+        ScoreText,
+        TextBundle::from_section(
+            "Score: 0",
+            TextStyle {
+                font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                font_size: 30.0,
+                color: Color::WHITE,
+                ..default()
+            },
+        )
+        .with_text_justify(JustifyText::Center)
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            left: Val::Px(10.0),
+            bottom: Val::Px(10.0),
+            ..default()
+        }),
+    ));
+}
+
+pub fn calculate_player_radius(score: u32) -> f32
+{
+    let stages = score / SCORE_PER_RADIUS_STAGE;
+    MIN_PLAYER_RADIUS + stages as f32 * RADIUS_GROWTH_PER_STAGE
 }

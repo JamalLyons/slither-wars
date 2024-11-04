@@ -3,8 +3,6 @@ use bevy::math::Vec2;
 use bevy::prelude::{Commands, Component, DespawnRecursiveExt, Entity, Query, With};
 use rand::Rng;
 
-use crate::constants::*;
-
 /// Despawn's all entities with the given component
 pub fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands)
 {
@@ -37,10 +35,4 @@ pub fn generate_random_color() -> Color
 
     let mut rng = rand::thread_rng();
     colors[rng.gen_range(0..colors.len())]
-}
-
-pub fn calculate_player_radius(score: u32) -> f32
-{
-    let stages = score / SCORE_PER_RADIUS_STAGE;
-    MIN_PLAYER_RADIUS + stages as f32 * RADIUS_GROWTH_PER_STAGE
 }
