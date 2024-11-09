@@ -2,7 +2,7 @@ use bevy::core::FrameCount;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
-use components::{GameWorld, Snake, SnakeSegment};
+use components::GameWorld;
 
 use crate::*;
 
