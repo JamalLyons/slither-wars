@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
-use crate::components::{Segment, SegmentPositionHistory, Snake};
+use crate::components::{Segment, SegmentPositionHistory, Snake, SnakeSegment};
 use crate::constants::*;
 use crate::orb::components::Orb;
 use super::components::Bot;
@@ -43,6 +43,9 @@ pub fn spawn_bots(
                     index: i,
                     radius: PLAYER_DEFAULT_RADIUS,
                 },
+                SnakeSegment {
+                    owner: bot_entity,
+                },
                 MaterialMesh2dBundle {
                     mesh: meshes.add(Circle::new(1.0)).into(),
                     material: materials.add(ColorMaterial::from(bot.color)),
@@ -73,38 +76,53 @@ pub fn spawn_bots(
 
 pub fn bot_movement(
     time: Res<Time>,
-    mut bot_query: Query<(&mut Transform, &mut Bot, &mut SegmentPositionHistory)>,
-    mut segment_query: Query<(&mut Transform, &Segment), Without<Bot>>,
+    mut query_set: ParamSet<(
+        Query<(Entity, &mut Transform, &mut Bot, &mut SegmentPositionHistory)>,
+        Query<(&mut Transform, &Segment, &SnakeSegment)>,
+    )>,
 ) {
-    for (mut transform, mut bot, mut segment_history) in bot_query.iter_mut() {
-        bot.decision_timer.tick(time.delta());
+    // First, update bot positions and collect their movements
+    let mut bot_movements: Vec<(Entity, Vec3, Vec<Vec3>)> = Vec::new();
+    
+    {
+        let mut bot_query = query_set.p0();
+        for (bot_entity, mut transform, mut bot, mut segment_history) in bot_query.iter_mut() {
+            bot.decision_timer.tick(time.delta());
 
-        if bot.decision_timer.just_finished() {
-            let random_position = generate_random_position_within_radius(MAP_RADIUS);
-            bot.target_position = Some(random_position);
-        }
-
-        if let Some(target) = bot.target_position {
-            let direction = (target - transform.translation.truncate()).normalize();
-            transform.translation += direction.extend(0.0) * BOT_SPEED * time.delta_seconds();
-            
-            // Update rotation to face movement direction
-            let angle = direction.y.atan2(direction.x);
-            transform.rotation = Quat::from_rotation_z(angle);
-
-            // Update segment history
-            segment_history.positions.push_front(transform.translation);
-            if segment_history.positions.len() > MAX_SEGMENT_HISTORY {
-                segment_history.positions.pop_back();
+            if bot.decision_timer.just_finished() {
+                let random_position = generate_random_position_within_radius(MAP_RADIUS);
+                bot.target_position = Some(random_position);
             }
 
-            // Update segments
-            for (mut segment_transform, segment) in segment_query.iter_mut() {
+            if let Some(target) = bot.target_position {
+                let direction = (target - transform.translation.truncate()).normalize();
+                transform.translation += direction.extend(0.0) * BOT_SPEED * time.delta_seconds();
+                
+                let angle = direction.y.atan2(direction.x);
+                transform.rotation = Quat::from_rotation_z(angle);
+
+                segment_history.positions.push_front(transform.translation);
+                if segment_history.positions.len() > MAX_SEGMENT_HISTORY {
+                    segment_history.positions.pop_back();
+                }
+
+                bot_movements.push((
+                    bot_entity,
+                    transform.translation,
+                    segment_history.positions.clone().into(),
+                ));
+            }
+        }
+    }
+
+    // Then, update segment positions
+    let mut segment_query = query_set.p1();
+    for (bot_entity, _bot_pos, history) in bot_movements {
+        for (mut segment_transform, segment, snake_segment) in segment_query.iter_mut() {
+            if snake_segment.owner == bot_entity {
                 let index = (segment.index + 1) * POSITIONS_PER_SEGMENT;
-                if index < segment_history.positions.len().try_into().unwrap() {
-                    segment_transform.translation = segment_history.positions[index as usize];
-                } else {
-                    segment_transform.translation = transform.translation;
+                if index < history.len() as u32 {
+                    segment_transform.translation = history[index as usize];
                 }
             }
         }
@@ -113,12 +131,12 @@ pub fn bot_movement(
 
 pub fn bot_eating(
     mut commands: Commands,
-    mut bot_query: Query<(&Transform, &mut Snake, &Bot), With<Bot>>,
+    mut bot_query: Query<(Entity, &Transform, &mut Snake, &Bot), With<Bot>>,
     food_query: Query<(Entity, &Transform), With<Orb>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    for (bot_transform, mut snake, bot) in bot_query.iter_mut() {
+    for (bot_entity, bot_transform, mut snake, bot) in bot_query.iter_mut() {
         for (food_entity, food_transform) in food_query.iter() {
             let distance = bot_transform.translation.distance(food_transform.translation);
             
@@ -133,6 +151,7 @@ pub fn bot_eating(
                     bot_transform.translation,
                     snake.length,
                     bot.color,
+                    bot_entity,
                 );
 
                 snake.segments.push_back(segment_entity);
@@ -149,12 +168,16 @@ fn add_segment(
     position: Vec3,
     index: u32,
     color: Color,
+    owner: Entity,
 ) -> Entity {
     commands
         .spawn((
             Segment {
                 index,
                 radius: PLAYER_DEFAULT_RADIUS,
+            },
+            SnakeSegment {
+                owner,
             },
             MaterialMesh2dBundle {
                 mesh: meshes.add(Circle::new(1.0)).into(),

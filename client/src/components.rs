@@ -44,3 +44,8 @@ impl Default for SegmentPositionHistory
         }
     }
 }
+
+#[derive(Component)]
+pub struct SnakeSegment {
+    pub owner: Entity,  // This will store the entity ID of the snake (bot or player) that owns this segment
+}
