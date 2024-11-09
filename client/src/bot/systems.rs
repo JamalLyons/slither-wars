@@ -33,7 +33,7 @@ pub fn spawn_bots(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut 
                     ..default()
                 },
                 bot.clone(),
-                Snake::default(),
+                Snake::new(bot.color),
                 SegmentPositionHistory::default(),
             ))
             .id();
@@ -72,6 +72,7 @@ pub fn spawn_bots(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut 
             snake.insert(Snake {
                 length: PLAYER_DEFAULT_LENGTH,
                 segments: snake_segments,
+                color: bot.color,
             });
         }
     }
@@ -174,6 +175,7 @@ pub fn bot_movement(
         }
     }
 }
+
 
 pub fn bot_eating(
     mut commands: Commands,

@@ -12,15 +12,17 @@ pub struct Snake
 {
     pub length: u32,
     pub segments: VecDeque<Entity>,
+    pub color: Color,
 }
 
-impl Default for Snake
+impl Snake
 {
-    fn default() -> Self
+    pub fn new(color: Color) -> Self
     {
         Self {
             length: PLAYER_DEFAULT_LENGTH,
             segments: VecDeque::new(),
+            color,
         }
     }
 }
@@ -52,4 +54,9 @@ impl Default for SegmentPositionHistory
 pub struct SnakeSegment
 {
     pub owner: Entity, // This will store the entity ID of the snake (bot or player) that owns this segment
+}
+
+#[derive(Component)]
+pub struct DeadSnake {
+    pub killer: Entity,
 }

@@ -1,4 +1,5 @@
-- add ai bot players (maybe https://github.com/victorb/dogoap will help?)
+- make all player segments grow with score (right now only the head does which is weird lol)
+- make bot radius grow with score
 - add a leaderboard to view top 10 players and their score (and support bots on there)
 - make a complex movement system
 - mini map system

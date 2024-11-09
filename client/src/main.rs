@@ -60,6 +60,10 @@ fn main()
         .add_plugins(bot::BotPlugin)
         .add_plugins(orb::OrbPlugin)
         .add_systems(Startup, (spawn_camera, spawn_game_world))
-        .add_systems(Update, make_window_visible)
+        .add_systems(Update, (
+            make_window_visible,
+            check_snake_collisions,
+            cleanup_dead_snakes,
+        ))
         .run();
 }

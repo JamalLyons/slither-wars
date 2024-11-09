@@ -26,7 +26,7 @@ pub fn spawn_player(
     let player_entity = commands
         .spawn((
             player.clone(),
-            Snake::default(),
+            Snake::new(player.color),
             MaterialMesh2dBundle {
                 mesh: meshes.add(Circle::new(1.0)).into(),
                 material: materials.add(ColorMaterial::from(player.color)),
@@ -71,6 +71,7 @@ pub fn spawn_player(
         snake.insert(Snake {
             length: PLAYER_DEFAULT_LENGTH,
             segments: snake_segments,
+            color: player.color,
         });
     }
 
@@ -248,6 +249,7 @@ pub fn collect_orb(
         }
     }
 }
+
 
 pub fn add_segment(
     commands: &mut Commands,

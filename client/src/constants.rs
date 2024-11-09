@@ -11,7 +11,6 @@ pub const POSITIONS_PER_SEGMENT: u32 = 5; // Number of positions per segment
 pub const MAX_SEGMENT_HISTORY: usize = 100_000; // The max size a plyaer can be in the game
 
 /// Orb constants
-pub const ORB_RADIUS: f32 = 5.0;
 pub const BOOST_ORB_RADIUS: f32 = 4.0;
 pub const MAX_ORB_SPAWN_COUNT: usize = 5000;
 
@@ -55,3 +54,8 @@ pub const Z_BACKGROUND: f32 = -10.0;
 pub const Z_ORBS: f32 = 0.0;
 pub const Z_BOT_SEGMENTS: f32 = 1.0;
 pub const Z_PLAYER_SEGMENTS: f32 = 2.0;
+
+/// Segment size constants
+pub const SEGMENT_SIZE: f32 = 20.0;
+pub const ORB_RADIUS: f32 = 5.0;
+pub const Z_ORB_LAYER: f32 = 2.0;
