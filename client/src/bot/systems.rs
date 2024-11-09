@@ -1,19 +1,18 @@
+use std::collections::VecDeque;
+use std::time::Duration;
+
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
+use rand::Rng;
+
+use super::components::Bot;
 use crate::components::{Segment, SegmentPositionHistory, Snake, SnakeSegment};
 use crate::constants::*;
 use crate::orb::components::Orb;
-use super::components::Bot;
 use crate::utils::*;
-use std::collections::VecDeque;
-use std::time::Duration;
-use rand::Rng;
 
-pub fn spawn_bots(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
+pub fn spawn_bots(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>)
+{
     // Spawn initial bots
     for _ in 0..BOT_DEFAULT_SPAWN_AMOUNT {
         let random_position = generate_random_position_within_radius(MAP_RADIUS);
@@ -21,48 +20,50 @@ pub fn spawn_bots(
 
         let bot = Bot::default();
 
-        let bot_entity = commands.spawn((
-            MaterialMesh2dBundle {
-                mesh: meshes.add(Circle::new(1.0)).into(),
-                material: materials.add(ColorMaterial::from(bot.color.clone())),
-                transform: Transform {
-                    translation: random_position.extend(Z_BOT_SEGMENTS),
-                    scale: bot_size,
-                    ..default()
-                },
-                ..default()
-            },
-            bot.clone(),
-            Snake::default(),
-            SegmentPositionHistory::default(),
-        )).id();
-
-        // Spawn initial segments for the bot
-        let mut snake_segments = VecDeque::new();
-        for i in 0..PLAYER_DEFAULT_LENGTH {
-            let segment_entity = commands.spawn((
-                Segment {
-                    index: i,
-                    radius: PLAYER_DEFAULT_RADIUS,
-                },
-                SnakeSegment {
-                    owner: bot_entity,
-                },
+        let bot_entity = commands
+            .spawn((
                 MaterialMesh2dBundle {
                     mesh: meshes.add(Circle::new(1.0)).into(),
-                    material: materials.add(ColorMaterial::from(bot.color)),
+                    material: materials.add(ColorMaterial::from(bot.color.clone())),
                     transform: Transform {
-                        translation: Vec3::new(
-                            random_position.x - (i as f32 * SEGMENT_SPACING),
-                            random_position.y,
-                            Z_BOT_SEGMENTS
-                        ),
+                        translation: random_position.extend(Z_BOT_SEGMENTS),
                         scale: bot_size,
                         ..default()
                     },
                     ..default()
                 },
-            )).id();
+                bot.clone(),
+                Snake::default(),
+                SegmentPositionHistory::default(),
+            ))
+            .id();
+
+        // Spawn initial segments for the bot
+        let mut snake_segments = VecDeque::new();
+        for i in 0..PLAYER_DEFAULT_LENGTH {
+            let segment_entity = commands
+                .spawn((
+                    Segment {
+                        index: i,
+                        radius: PLAYER_DEFAULT_RADIUS,
+                    },
+                    SnakeSegment { owner: bot_entity },
+                    MaterialMesh2dBundle {
+                        mesh: meshes.add(Circle::new(1.0)).into(),
+                        material: materials.add(ColorMaterial::from(bot.color)),
+                        transform: Transform {
+                            translation: Vec3::new(
+                                random_position.x - (i as f32 * SEGMENT_SPACING),
+                                random_position.y,
+                                Z_BOT_SEGMENTS,
+                            ),
+                            scale: bot_size,
+                            ..default()
+                        },
+                        ..default()
+                    },
+                ))
+                .id();
             snake_segments.push_back(segment_entity);
         }
 
@@ -83,30 +84,29 @@ pub fn bot_movement(
         Query<(&mut Transform, &Segment, &SnakeSegment)>,
         Query<&Transform, With<Orb>>,
     )>,
-) {
+)
+{
     let mut bot_movements: Vec<(Entity, Vec3, Vec<Vec3>)> = Vec::new();
     let mut rng = rand::thread_rng();
-    
+
     // First, collect orb positions
-    let nearby_orbs: Vec<Vec2> = query_set.p2()
-        .iter()
-        .map(|t| t.translation.truncate())
-        .collect();
-    
+    let nearby_orbs: Vec<Vec2> = query_set.p2().iter().map(|t| t.translation.truncate()).collect();
+
     // Then update bot positions
     {
         let mut bot_query = query_set.p0();
         for (bot_entity, mut transform, mut bot, mut segment_history) in bot_query.iter_mut() {
             bot.decision_timer.tick(time.delta());
 
-            if bot.decision_timer.just_finished() || 
-               bot.target_position.map_or(true, |target| 
-                   transform.translation.truncate().distance(target) < PLAYER_DEFAULT_RADIUS
-               ) 
+            if bot.decision_timer.just_finished()
+                || bot.target_position.map_or(true, |target| {
+                    transform.translation.truncate().distance(target) < PLAYER_DEFAULT_RADIUS
+                })
             {
                 let current_pos = transform.translation.truncate();
                 // Filter nearby orbs based on current bot position
-                let nearby_orbs: Vec<Vec2> = nearby_orbs.iter()
+                let nearby_orbs: Vec<Vec2> = nearby_orbs
+                    .iter()
                     .filter(|pos| current_pos.distance(**pos) < MAP_RADIUS * 0.5)
                     .copied()
                     .collect();
@@ -127,30 +127,26 @@ pub fn bot_movement(
                     bot.target_position = Some(random_position);
                 }
 
-                bot.decision_timer.set_duration(Duration::from_secs_f32(
-                    BOT_SPAWN_INTERVAL + rng.gen_range(-0.2..0.2)
-                ));
+                bot.decision_timer
+                    .set_duration(Duration::from_secs_f32(BOT_SPAWN_INTERVAL + rng.gen_range(-0.2..0.2)));
             }
 
             if let Some(target) = bot.target_position {
                 let current_pos = transform.translation.truncate();
                 let direction = (target - current_pos).normalize();
-                
-                let wobble = Vec2::new(
-                    rng.gen_range(-0.2..0.2),
-                    rng.gen_range(-0.2..0.2)
-                );
+
+                let wobble = Vec2::new(rng.gen_range(-0.2..0.2), rng.gen_range(-0.2..0.2));
                 let direction = (direction + wobble * 0.1).normalize();
 
                 transform.translation += direction.extend(0.0) * BOT_SPEED * time.delta_seconds();
-                
+
                 let angle = direction.y.atan2(direction.x);
                 transform.rotation = Quat::from_rotation_z(angle);
 
                 let distance_from_center = transform.translation.truncate().length();
                 if distance_from_center > MAP_RADIUS - PLAYER_DEFAULT_RADIUS {
-                    let clamped_position = transform.translation.truncate().normalize() 
-                        * (MAP_RADIUS - PLAYER_DEFAULT_RADIUS);
+                    let clamped_position =
+                        transform.translation.truncate().normalize() * (MAP_RADIUS - PLAYER_DEFAULT_RADIUS);
                     transform.translation = clamped_position.extend(transform.translation.z);
                     bot.target_position = None;
                 }
@@ -160,11 +156,7 @@ pub fn bot_movement(
                     segment_history.positions.pop_back();
                 }
 
-                bot_movements.push((
-                    bot_entity,
-                    transform.translation,
-                    segment_history.positions.clone().into(),
-                ));
+                bot_movements.push((bot_entity, transform.translation, segment_history.positions.clone().into()));
             }
         }
     }
@@ -189,11 +181,12 @@ pub fn bot_eating(
     food_query: Query<(Entity, &Transform), With<Orb>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-) {
+)
+{
     for (bot_entity, bot_transform, mut snake, bot) in bot_query.iter_mut() {
         for (food_entity, food_transform) in food_query.iter() {
             let distance = bot_transform.translation.distance(food_transform.translation);
-            
+
             if distance < PLAYER_DEFAULT_RADIUS + ORB_RADIUS {
                 commands.entity(food_entity).despawn();
 
@@ -223,16 +216,15 @@ fn add_segment(
     index: u32,
     color: Color,
     owner: Entity,
-) -> Entity {
+) -> Entity
+{
     commands
         .spawn((
             Segment {
                 index,
                 radius: PLAYER_DEFAULT_RADIUS,
             },
-            SnakeSegment {
-                owner,
-            },
+            SnakeSegment { owner },
             MaterialMesh2dBundle {
                 mesh: meshes.add(Circle::new(1.0)).into(),
                 material: materials.add(ColorMaterial::from(color)),

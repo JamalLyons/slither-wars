@@ -2,15 +2,15 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+mod components;
 mod constants;
 mod resources;
 mod systems;
 mod utils;
-mod components;
 
+mod bot;
 mod orb;
 mod player;
-mod bot;
 
 use std::time::Duration;
 

@@ -23,44 +23,46 @@ pub fn spawn_player(
 
     let player = Player::new("Player".to_string(), generate_random_color());
 
-    let player_entity = commands.spawn((
-        player.clone(),
-        Snake::default(),
-        MaterialMesh2dBundle {
-            mesh: meshes.add(Circle::new(1.0)).into(),
-            material: materials.add(ColorMaterial::from(player.color)),
-            transform: Transform {
-                scale: player_size,
-                translation: player_spawn_location.extend(Z_PLAYER_SEGMENTS),
-                ..default()
-            },
-            ..default()
-        },
-        SegmentPositionHistory::default(),
-    )).id();
-
-    // Spawn initial segments
-    let mut snake_segments = VecDeque::new();
-    for i in 0..PLAYER_DEFAULT_LENGTH {
-        let segment_entity = commands.spawn((
-            Segment {
-                index: i,
-                radius: PLAYER_DEFAULT_RADIUS,
-            },
-            SnakeSegment {
-                owner: player_entity,
-            },
+    let player_entity = commands
+        .spawn((
+            player.clone(),
+            Snake::default(),
             MaterialMesh2dBundle {
                 mesh: meshes.add(Circle::new(1.0)).into(),
-                material: materials.add(player.color),
+                material: materials.add(ColorMaterial::from(player.color)),
                 transform: Transform {
-                    translation: Vec3::new(-(i as f32) * SEGMENT_SPACING, 0.0, Z_PLAYER_SEGMENTS),
                     scale: player_size,
+                    translation: player_spawn_location.extend(Z_PLAYER_SEGMENTS),
                     ..default()
                 },
                 ..default()
             },
-        )).id();
+            SegmentPositionHistory::default(),
+        ))
+        .id();
+
+    // Spawn initial segments
+    let mut snake_segments = VecDeque::new();
+    for i in 0..PLAYER_DEFAULT_LENGTH {
+        let segment_entity = commands
+            .spawn((
+                Segment {
+                    index: i,
+                    radius: PLAYER_DEFAULT_RADIUS,
+                },
+                SnakeSegment { owner: player_entity },
+                MaterialMesh2dBundle {
+                    mesh: meshes.add(Circle::new(1.0)).into(),
+                    material: materials.add(player.color),
+                    transform: Transform {
+                        translation: Vec3::new(-(i as f32) * SEGMENT_SPACING, 0.0, Z_PLAYER_SEGMENTS),
+                        scale: player_size,
+                        ..default()
+                    },
+                    ..default()
+                },
+            ))
+            .id();
         snake_segments.push_back(segment_entity);
     }
 
@@ -185,11 +187,7 @@ pub fn move_player(
                 segment_history.positions.pop_back();
             }
 
-            player_movements.push((
-                player_entity,
-                transform.translation,
-                segment_history.positions.clone().into(),
-            ));
+            player_movements.push((player_entity, transform.translation, segment_history.positions.clone().into()));
 
             let new_radius = calculate_player_radius(player.score);
             if (new_radius - player.radius).abs() > f32::EPSILON {

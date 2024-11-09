@@ -2,11 +2,9 @@ use bevy::core::FrameCount;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
+use components::{GameWorld, Snake, SnakeSegment};
 
 use crate::*;
-
-#[derive(Component)]
-pub struct GameWorld;
 
 pub fn spawn_game_world(
     mut commands: Commands,
@@ -51,4 +49,13 @@ pub fn make_window_visible(mut window: Query<&mut Window>, frames: Res<FrameCoun
         // At this point the gpu is ready to show the app so we can make the window visible.
         window.single_mut().visible = true;
     }
+}
+
+fn spawn_death_orbs(commands: &mut Commands, dead_entity: Entity, snake_length: u32, killer_entity: Entity, was_player: bool)
+{
+    // TODO: Implement orb spawning on death
+    // This could include:
+    // 1. Converting snake length into a number of orbs
+    // 2. Spawning those orbs in a pattern around the death location
+    // 3. Potentially giving bonus points/orbs to the killer
 }

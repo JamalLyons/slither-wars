@@ -5,6 +5,9 @@ use bevy::prelude::*;
 use crate::PLAYER_DEFAULT_LENGTH;
 
 #[derive(Component)]
+pub struct GameWorld;
+
+#[derive(Component)]
 pub struct Snake
 {
     pub length: u32,
@@ -46,6 +49,7 @@ impl Default for SegmentPositionHistory
 }
 
 #[derive(Component)]
-pub struct SnakeSegment {
-    pub owner: Entity,  // This will store the entity ID of the snake (bot or player) that owns this segment
+pub struct SnakeSegment
+{
+    pub owner: Entity, // This will store the entity ID of the snake (bot or player) that owns this segment
 }
