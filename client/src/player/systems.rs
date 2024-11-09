@@ -1,7 +1,10 @@
+use std::collections::VecDeque;
+
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 
 use super::components::*;
+use crate::components::{Segment, SegmentPositionHistory, Snake};
 use crate::constants::*;
 use crate::orb::components::Orb;
 use crate::orb::systems::spawn_singlular_orb;
@@ -15,35 +18,38 @@ pub fn spawn_player(
     mut global_game_state: ResMut<GlobalGameState>,
 )
 {
-    let player_name = "Player".to_string();
-    let player_color = generate_random_color();
-    let player_spawn_localtion = generate_random_position_within_radius(MAP_RADIUS);
+    let player_spawn_location = generate_random_position_within_radius(MAP_RADIUS);
     let player_size = Vec3::new(PLAYER_DEFAULT_RADIUS, PLAYER_DEFAULT_RADIUS, Z_PLAYER_SEGMENTS);
 
-    commands.spawn((
-        Player::new(player_name.clone(), player_color),
+    let player = Player::new("Player".to_string(), generate_random_color());
+
+    let player_entity = commands.spawn((
+        player.clone(),
+        Snake::default(),
         MaterialMesh2dBundle {
             mesh: meshes.add(Circle::new(1.0)).into(),
-            material: materials.add(ColorMaterial::from(player_color)),
+            material: materials.add(ColorMaterial::from(player.color)),
             transform: Transform {
-                scale: player_size, // Scale to initial radius
-                translation: player_spawn_localtion.extend(Z_PLAYER_SEGMENTS),
+                scale: player_size,
+                translation: player_spawn_location.extend(Z_PLAYER_SEGMENTS),
                 ..default()
             },
             ..default()
         },
         SegmentPositionHistory::default(),
-    ));
+    )).id();
 
+    // Spawn initial segments
+    let mut snake_segments = VecDeque::new();
     for i in 0..PLAYER_DEFAULT_LENGTH {
-        commands.spawn((
+        let segment_entity = commands.spawn((
             Segment {
                 index: i,
                 radius: PLAYER_DEFAULT_RADIUS,
             },
             MaterialMesh2dBundle {
                 mesh: meshes.add(Circle::new(1.0)).into(),
-                material: materials.add(player_color),
+                material: materials.add(player.color),
                 transform: Transform {
                     translation: Vec3::new(-(i as f32) * SEGMENT_SPACING, 0.0, Z_PLAYER_SEGMENTS),
                     scale: player_size,
@@ -51,7 +57,16 @@ pub fn spawn_player(
                 },
                 ..default()
             },
-        ));
+        )).id();
+        snake_segments.push_back(segment_entity);
+    }
+
+    // Add segments to the Snake component
+    if let Some(mut snake) = commands.get_entity(player_entity) {
+        snake.insert(Snake {
+            length: PLAYER_DEFAULT_LENGTH,
+            segments: snake_segments,
+        });
     }
 
     global_game_state.total_snakes += 1;
@@ -63,15 +78,16 @@ pub fn move_player(
     mut materials: ResMut<Assets<ColorMaterial>>,
     time: Res<Time>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<(&mut Transform, &mut SegmentPositionHistory, &mut Player), With<Player>>,
+    mut player_query: Query<(&mut Transform, &mut SegmentPositionHistory, &mut Player, &mut Snake)>,
     mut segment_query: Query<(&mut Transform, &Segment), Without<Player>>,
 )
 {
-    for (mut player_transform, mut segment_history, mut player) in player_query.iter_mut() {
+    for (mut player_transform, mut segment_history, mut player, mut snake) in player_query.iter_mut() {
         let mut direction = Vec3::ZERO;
         let mut speed = PLAYER_SPEED;
         let delta_seconds = time.delta_seconds();
 
+        // Movement input handling
         if keyboard_input.pressed(KeyCode::ArrowUp) {
             direction.y += 1.0;
         }
@@ -104,25 +120,21 @@ pub fn move_player(
                 player.boost_timer -= score_deduction as f32;
 
                 // Remove segments based on the score deduction
-                remove_segment(&mut commands, &mut player, score_deduction);
+                remove_segment(&mut commands, &mut snake, score_deduction);
             }
 
-            // Accumulate time for orb spawning
+            // Handle orb spawning during boost
             player.orb_spawn_timer += delta_seconds;
-
-            // Spawn orbs at intervals during boosting
             if player.orb_spawn_timer >= ORB_SPAWN_INTERVAL {
                 if direction != Vec3::ZERO {
                     direction = direction.normalize();
                 } else {
-                    // Use previous movement direction
                     direction = segment_history
                         .positions
                         .get(1)
                         .map_or(Vec3::ZERO, |prev_pos| (player_transform.translation - *prev_pos).normalize());
                 }
 
-                // Calculate the minimum safe distance to avoid immediate collection
                 let collection_threshold = player.radius + BOOST_ORB_RADIUS;
                 let orb_position =
                     player_transform.translation - direction * (collection_threshold + ORB_SPAWN_DISTANCE_MARGIN);
@@ -139,55 +151,41 @@ pub fn move_player(
                 player.orb_spawn_timer -= ORB_SPAWN_INTERVAL;
             }
         } else {
-            // Reset timers when not boosting
             player.boost_timer = 0.0;
             player.orb_spawn_timer = 0.0;
         }
 
-        // Movement and world boundary checks
+        // Movement and boundary checks
         if direction != Vec3::ZERO {
             direction = direction.normalize();
             let new_translation = player_transform.translation + direction * speed * delta_seconds;
 
-            // Boundary check
             let distance_from_center = new_translation.truncate().length();
             if distance_from_center + player.radius <= MAP_RADIUS {
                 player_transform.translation = new_translation;
             } else {
-                // Clamp position
                 let clamped_position = new_translation.truncate().normalize() * (MAP_RADIUS - player.radius);
                 player_transform.translation = clamped_position.extend(player_transform.translation.z);
             }
-
-            // Record position
-            segment_history.positions.push_front(player_transform.translation);
-
-            // If player has exceeded the segment history limit, remove the oldest position
-            if segment_history.positions.len() > MAX_SEGMENT_HISTORY {
-                segment_history.positions.pop_back();
-            }
         }
 
-        // Record player's position
+        // Update segment history
         segment_history.positions.push_front(player_transform.translation);
-        if segment_history.positions.len() > MAX_SEGMENT_HISTORY as usize {
+        if segment_history.positions.len() > MAX_SEGMENT_HISTORY {
             segment_history.positions.pop_back();
         }
 
         let new_radius = calculate_player_radius(player.score);
-
-        // Update the player's radius and scale if it has changed
         if (new_radius - player.radius).abs() > f32::EPSILON {
             player.radius = new_radius;
             player_transform.scale = Vec3::new(player.radius, player.radius, Z_PLAYER_SEGMENTS);
         }
 
-        // Update the player's segments
+        // Update segments
         for (mut segment_transform, segment) in segment_query.iter_mut() {
             let index = (segment.index + 1) * POSITIONS_PER_SEGMENT;
             if index < segment_history.positions.len().try_into().unwrap() {
                 segment_transform.translation = segment_history.positions[index as usize];
-                // Ensure the segment's scale matches the player's radius
                 segment_transform.scale = Vec3::new(player.radius, player.radius, Z_PLAYER_SEGMENTS);
             } else {
                 segment_transform.translation = player_transform.translation;
@@ -198,13 +196,13 @@ pub fn move_player(
 
 pub fn collect_orb(
     mut commands: Commands,
-    mut player_query: Query<(&mut Transform, &mut Player), Without<Orb>>,
+    mut player_query: Query<(&Transform, &mut Player, &mut Snake), Without<Orb>>,
     orb_query: Query<(Entity, &Transform, &Orb), Without<Player>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 )
 {
-    for (player_transform, mut player) in player_query.iter_mut() {
+    for (player_transform, mut player, mut snake) in player_query.iter_mut() {
         for (orb_entity, orb_transform, orb) in orb_query.iter() {
             let distance = player_transform
                 .translation
@@ -222,12 +220,12 @@ pub fn collect_orb(
                     player_transform.translation,
                     player.color,
                     player.radius,
-                    player.segment_count,
+                    snake.length,
                     false,
                 );
 
-                player.segments.push_back(segment_entity);
-                player.segment_count += 1;
+                snake.segments.push_back(segment_entity);
+                snake.length += 1;
             }
         }
     }
@@ -263,15 +261,14 @@ pub fn add_segment(
         .id()
 }
 
-pub fn remove_segment(commands: &mut Commands, player: &mut Player, segments_to_remove: u32)
+pub fn remove_segment(commands: &mut Commands, snake: &mut Snake, segments_to_remove: u32)
 {
-    let segments_to_remove = segments_to_remove.min(player.segment_count);
+    let segments_to_remove = segments_to_remove.min(snake.length);
 
     for _ in 0..segments_to_remove {
-        let segment_entity = player.segments.pop_back();
-        if let Some(entity) = segment_entity {
+        if let Some(entity) = snake.segments.pop_back() {
             commands.entity(entity).despawn();
-            player.segment_count -= 1;
+            snake.length = snake.length.saturating_sub(1);
         }
     }
 }

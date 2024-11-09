@@ -6,9 +6,11 @@ mod constants;
 mod resources;
 mod systems;
 mod utils;
+mod components;
 
 mod orb;
 mod player;
+mod bot;
 
 use std::time::Duration;
 
@@ -55,6 +57,7 @@ fn main()
         ))
         .add_plugins(FpsOverlayPlugin::default())
         .add_plugins(player::PlayerPlugin)
+        .add_plugins(bot::BotPlugin)
         .add_plugins(orb::OrbPlugin)
         .add_systems(Startup, (spawn_camera, spawn_game_world))
         .add_systems(Update, make_window_visible)

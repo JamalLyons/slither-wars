@@ -1,0 +1,46 @@
+use std::collections::VecDeque;
+
+use bevy::prelude::*;
+
+use crate::PLAYER_DEFAULT_LENGTH;
+
+#[derive(Component)]
+pub struct Snake
+{
+    pub length: u32,
+    pub segments: VecDeque<Entity>,
+}
+
+impl Default for Snake
+{
+    fn default() -> Self
+    {
+        Self {
+            length: PLAYER_DEFAULT_LENGTH,
+            segments: VecDeque::new(),
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct Segment
+{
+    pub index: u32,
+    pub radius: f32,
+}
+
+#[derive(Component, Clone, Debug)]
+pub struct SegmentPositionHistory
+{
+    pub positions: VecDeque<Vec3>,
+}
+
+impl Default for SegmentPositionHistory
+{
+    fn default() -> Self
+    {
+        Self {
+            positions: VecDeque::new(),
+        }
+    }
+}

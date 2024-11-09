@@ -3,7 +3,7 @@ use bevy::color::Color;
 /// Player movement and growth constants
 pub const PLAYER_SPEED: f32 = 100.; // Pixels per second
 pub const PLAYER_DEFAULT_RADIUS: f32 = 12.5;
-pub const PLAYER_DEFAULT_LENGTH: u32 = 15; // Number of segments the player starts with
+pub const PLAYER_DEFAULT_LENGTH: u32 = 5; // Number of segments the player starts with
 pub const MAX_GROWTH_LIMIT: u32 = 1000; // The most segments the player can have
 
 /// Segment movement and spacing constants
