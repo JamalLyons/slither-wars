@@ -115,7 +115,13 @@ pub fn check_snake_collisions(
                         other_segment.owner,
                         false,
                         snake.color,
-                        death_position,
+                        &snake.segments.iter().map(|&segment_entity| {
+                            if let Ok((_, segment, segment_transform)) = segment_query.get(segment_entity) {
+                                segment_transform.translation
+                            } else {
+                                Vec3::new(0.0, 0.0, 0.0)
+                            }
+                        }).collect::<Vec<_>>(),
                     );
 
                     processed_deaths.insert(snake_entity);
@@ -134,26 +140,19 @@ fn spawn_death_orbs(
     killer_entity: Entity,
     was_player: bool,
     color: Color,
-    death_position: Vec3, // Add death_position parameter
-)
-{
-    let num_orbs = snake_length / 2;
-    let orb_value = 1;
-    let spawn_radius = 50.0;
-
-    for i in 0..num_orbs {
-        let angle = (i as f32 / num_orbs as f32) * std::f32::consts::TAU;
-        let offset = Vec3::new(angle.cos() * spawn_radius, angle.sin() * spawn_radius, Z_ORB_LAYER);
-
+    segment_positions: &[Vec3],
+) {
+    // Spawn one orb at each segment position
+    for &position in segment_positions {
         commands.spawn((
             Orb {
                 radius: ORB_RADIUS,
-                value: orb_value,
+                value: ORB_VALUE,
             },
             MaterialMesh2dBundle {
                 mesh: meshes.add(Circle::new(ORB_RADIUS)).into(),
                 material: materials.add(ColorMaterial::from(color)),
-                transform: Transform::from_translation(death_position + offset),
+                transform: Transform::from_translation(position),
                 ..default()
             },
         ));

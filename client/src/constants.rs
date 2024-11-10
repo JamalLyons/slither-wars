@@ -15,7 +15,7 @@ pub const BOOST_ORB_RADIUS: f32 = 4.0;
 pub const MAX_ORB_SPAWN_COUNT: usize = 5000;
 
 /// Orb spawning and scoring constants
-pub const ORB_SPAWN_PER_PLAYER: usize = 100;
+pub const ORB_SPAWN_PER_PLAYER: usize = 50;
 pub const ORB_SPAWN_INTERVAL: f32 = 0.6; // Orb spawn interval during boosting
 pub const ORB_SPAWN_DISTANCE_MARGIN: f32 = 1.0;
 pub const SCORE_PER_ORB: u32 = 1;

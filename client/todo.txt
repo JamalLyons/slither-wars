@@ -1,6 +1,3 @@
-- make all player segments grow with score (right now only the head does which is weird lol)
-- make bot radius grow with score
-- make death spawn orbs spawn in the same place as the players segment 
 - make bots avoid other snakes
 - add a leaderboard to view top 10 players and their score (and support bots on there)
 - make a complex player movement system
