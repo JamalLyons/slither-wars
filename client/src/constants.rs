@@ -35,6 +35,10 @@ pub const MIN_PLAYER_RADIUS: f32 = 12.5; // Minimum player radius
 
 /// Color constants
 pub const TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
+pub const LEADERBOARD_COLOR: Color = Color::srgb(1.0, 0.84, 0.0);
+pub const LEADERBOARD_ENTRY_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
+
+pub const BLACK_COLOR: Color = Color::srgb(0.0, 0.0, 0.0);
 
 /// Screen and map constants
 pub const SCREEN_WIDTH: f32 = 1000.;

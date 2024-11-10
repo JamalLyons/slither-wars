@@ -11,6 +11,7 @@ mod utils;
 mod bot;
 mod orb;
 mod player;
+mod leaderboard;
 
 use std::time::Duration;
 
@@ -59,6 +60,7 @@ fn main()
         .add_plugins(player::PlayerPlugin)
         .add_plugins(bot::BotPlugin)
         .add_plugins(orb::OrbPlugin)
+        .add_plugins(leaderboard::LeaderboardPlugin)
         .add_systems(Startup, (spawn_camera, spawn_game_world))
         .add_systems(Update, (
             make_window_visible,

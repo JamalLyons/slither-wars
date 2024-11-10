@@ -8,7 +8,6 @@ pub struct ScoreText;
 #[derive(Component, Clone, Debug)]
 pub struct Player
 {
-    pub name: String,
     pub score: u32,
     pub radius: f32,
     pub color: Color,
@@ -18,10 +17,9 @@ pub struct Player
 
 impl Player
 {
-    pub fn new(name: String, color: Color) -> Self
+    pub fn new(color: Color) -> Self
     {
         Player {
-            name,
             score: 0,
             radius: PLAYER_DEFAULT_RADIUS,
             color,

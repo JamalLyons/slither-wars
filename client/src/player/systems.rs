@@ -21,12 +21,13 @@ pub fn spawn_player(
     let player_spawn_location = generate_random_position_within_radius(MAP_RADIUS);
     let player_size = Vec3::new(PLAYER_DEFAULT_RADIUS, PLAYER_DEFAULT_RADIUS, Z_PLAYER_SEGMENTS);
 
-    let player = Player::new("Player".to_string(), generate_random_color());
+    let player = Player::new(generate_random_color());
 
     let player_entity = commands
         .spawn((
             player.clone(),
             Snake::new(player.color),
+            Name::new("Player 1"),
             MaterialMesh2dBundle {
                 mesh: meshes.add(Circle::new(1.0)).into(),
                 material: materials.add(ColorMaterial::from(player.color)),
