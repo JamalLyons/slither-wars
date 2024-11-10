@@ -6,9 +6,11 @@ use systems::*;
 
 pub struct LeaderboardPlugin;
 
-impl Plugin for LeaderboardPlugin {
-    fn build(&self, app: &mut App) {
+impl Plugin for LeaderboardPlugin
+{
+    fn build(&self, app: &mut App)
+    {
         app.add_systems(Startup, spawn_leaderboard)
-           .add_systems(Update, update_leaderboard);
+            .add_systems(Update, update_leaderboard);
     }
-} 
+}

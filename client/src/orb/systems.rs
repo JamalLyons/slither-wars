@@ -25,7 +25,15 @@ pub fn spawn_orbs(
             let position = generate_random_position_within_radius(MAP_RADIUS);
             let color = generate_random_color();
 
-            spawn_singlular_orb(&mut commands, &mut meshes, &mut materials, color, position, ORB_RADIUS, ORB_VALUE);
+            spawn_singlular_orb(
+                &mut commands,
+                &mut meshes,
+                &mut materials,
+                color,
+                position,
+                ORB_RADIUS,
+                ORB_VALUE,
+            );
         }
     }
 }

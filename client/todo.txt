@@ -1,14 +1,11 @@
-- add a leaderboard to view top 10 players and their score (and support bots on there)
 - make a complex player movement system
 - mini map system for players to see where other snacks are
-- as a player grows their radius, the camera should zoom out to keep them in view (and zoom in when they shrink)
 - Get/Create real game assets
+- improve snake movement system. Right now it's not very smooth and the segments take forever to catch up to the head. It should mimic the original slither.io game movement system.
 - Add game over screen
 - Make the game menu do something useful and customize it
 - Add UI to customize snake and username before games.
 - Allow custom single-player gameplay. Players can create custom games like how many bots, the difficulty, and the snake type
-- refactor game after the prototype is done.
-    I want to make the code a lot more 'feature flag' friendly and modular. Right now, everything is in one file, and it's hard to see small parts of the code.
 - Add snake builder UI system
 - Add multiplayer lobby
 - Add mod system (allow loading custom snake assets like skins)

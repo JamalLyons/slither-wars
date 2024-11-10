@@ -4,11 +4,10 @@ use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 
 use super::components::*;
-use crate::core::components::{Segment, SegmentPositionHistory, Snake, SnakeSegment};
 use crate::constants::*;
-use crate::orb::components::Orb;
-use crate::orb::systems::spawn_singlular_orb;
+use crate::core::components::{Segment, SegmentPositionHistory, Snake, SnakeSegment};
 use crate::core::resources::GlobalGameState;
+use crate::orb::systems::spawn_singlular_orb;
 use crate::utils::*;
 
 pub fn spawn_player(
@@ -214,76 +213,6 @@ pub fn move_player(
     }
 }
 
-pub fn collect_orb(
-    mut commands: Commands,
-    mut player_query: Query<(Entity, &Transform, &mut Player, &mut Snake), Without<Orb>>,
-    orb_query: Query<(Entity, &Transform, &Orb), Without<Player>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-)
-{
-    for (player_entity, player_transform, mut player, mut snake) in player_query.iter_mut() {
-        for (orb_entity, orb_transform, orb) in orb_query.iter() {
-            let distance = player_transform
-                .translation
-                .truncate()
-                .distance(orb_transform.translation.truncate());
-
-            if distance < player.radius + orb.radius {
-                commands.entity(orb_entity).despawn();
-                player.score += SCORE_PER_ORB;
-
-                let segment_entity = add_segment(
-                    &mut commands,
-                    &mut meshes,
-                    &mut materials,
-                    player_transform.translation,
-                    player.color,
-                    player.radius,
-                    snake.length,
-                    player_entity,
-                    false,
-                );
-
-                snake.segments.push_back(segment_entity);
-                snake.length += 1;
-            }
-        }
-    }
-}
-
-pub fn add_segment(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
-    position: Vec3,
-    color: Color,
-    radius: f32,
-    index: u32,
-    owner: Entity,
-    is_bot: bool,
-) -> Entity
-{
-    let z_index = if is_bot { Z_BOT_SEGMENTS } else { Z_PLAYER_SEGMENTS };
-
-    commands
-        .spawn((
-            Segment { radius, index },
-            SnakeSegment { owner },
-            MaterialMesh2dBundle {
-                mesh: meshes.add(Circle::new(1.0)).into(),
-                material: materials.add(ColorMaterial::from(color)),
-                transform: Transform {
-                    translation: position,
-                    scale: Vec3::new(radius, radius, z_index),
-                    ..default()
-                },
-                ..default()
-            },
-        ))
-        .id()
-}
-
 pub fn remove_segment(commands: &mut Commands, snake: &mut Snake, segments_to_remove: u32)
 {
     let segments_to_remove = segments_to_remove.min(snake.length);
@@ -302,7 +231,8 @@ pub fn update_player_camera(
     mut camera_query: Query<(&mut Transform, &mut OrthographicProjection), (With<Camera2d>, Without<Player>)>,
     player_query: Query<(&Transform, &Player), (With<Player>, Without<Camera2d>)>,
     time: Res<Time>,
-) {
+)
+{
     let Ok((mut camera_transform, mut projection)) = camera_query.get_single_mut() else {
         return;
     };
@@ -315,29 +245,28 @@ pub fn update_player_camera(
     let target_pos = Vec3::new(
         player_transform.translation.x,
         player_transform.translation.y,
-        camera_transform.translation.z
+        camera_transform.translation.z,
     );
-    camera_transform.translation = camera_transform.translation.lerp(target_pos, time.delta_seconds() * CAM_LERP_FACTOR);
+    camera_transform.translation = camera_transform
+        .translation
+        .lerp(target_pos, time.delta_seconds() * CAM_LERP_FACTOR);
 
     // Calculate desired zoom based on player radius
     let base_scale = 1.0;
     let radius_factor = player.radius / PLAYER_DEFAULT_RADIUS;
     let target_scale = base_scale + (radius_factor - 1.0) * CAMERA_ZOOM_FACTOR;
-    
+
     // Clamp the zoom scale between min and max values
     let target_scale = target_scale.clamp(MIN_CAMERA_ZOOM, MAX_CAMERA_ZOOM);
 
     // Smoothly interpolate to the target scale
     let current_scale = projection.scale;
-    projection.scale = lerp(
-        current_scale,
-        target_scale,
-        time.delta_seconds() * CAMERA_ZOOM_LERP_FACTOR
-    );
+    projection.scale = lerp(current_scale, target_scale, time.delta_seconds() * CAMERA_ZOOM_LERP_FACTOR);
 }
 
 // Helper function for linear interpolation
-fn lerp(start: f32, end: f32, t: f32) -> f32 {
+fn lerp(start: f32, end: f32, t: f32) -> f32
+{
     start + (end - start) * t
 }
 
@@ -350,7 +279,7 @@ pub fn spawn_score_text(mut commands: Commands, asset_server: Res<AssetServer>)
             TextStyle {
                 font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                 font_size: 30.0,
-                color: Color::WHITE,
+                color: TEXT_COLOR,
                 ..default()
             },
         )
@@ -366,7 +295,7 @@ pub fn spawn_score_text(mut commands: Commands, asset_server: Res<AssetServer>)
 
 pub fn update_score_text(mut player_query: Query<&Player>, mut text_query: Query<&mut Text, With<ScoreText>>)
 {
-    if let Ok(mut player) = player_query.get_single_mut() {
+    if let Ok(player) = player_query.get_single_mut() {
         if let Ok(mut text) = text_query.get_single_mut() {
             text.sections[0].value = format!("Score: {}", player.score);
         }

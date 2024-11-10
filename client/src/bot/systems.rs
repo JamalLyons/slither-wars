@@ -6,13 +6,18 @@ use bevy::sprite::MaterialMesh2dBundle;
 use rand::Rng;
 
 use super::components::Bot;
-use crate::core::components::{Segment, SegmentPositionHistory, Snake, SnakeSegment};
 use crate::constants::*;
-use crate::orb::components::Orb;
+use crate::core::components::{Segment, SegmentPositionHistory, Snake, SnakeSegment};
 use crate::core::resources::GlobalGameState;
+use crate::orb::components::Orb;
 use crate::utils::*;
 
-pub fn spawn_bots(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>, mut global_game_state: ResMut<GlobalGameState>)
+pub fn spawn_bots(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut global_game_state: ResMut<GlobalGameState>,
+)
 {
     if !SPAWN_BOTS_ENABLED {
         return;
@@ -101,7 +106,8 @@ pub fn bot_movement(
     let nearby_orbs: Vec<Vec2> = query_set.p2().iter().map(|t| t.translation.truncate()).collect();
 
     // First, collect all segment positions and their owners into a Vec
-    let segments_data: Vec<(Vec2, Entity)> = query_set.p1()
+    let segments_data: Vec<(Vec2, Entity)> = query_set
+        .p1()
         .iter()
         .map(|(transform, _, snake_segment)| (transform.translation.truncate(), snake_segment.owner))
         .collect();
@@ -113,7 +119,7 @@ pub fn bot_movement(
             bot.decision_timer.tick(time.delta());
 
             let current_pos = transform.translation.truncate();
-            
+
             // Calculate danger direction using the collected segments
             let mut danger_direction = Vec2::ZERO;
             for (segment_pos, owner) in &segments_data {
@@ -129,9 +135,9 @@ pub fn bot_movement(
             }
 
             if bot.decision_timer.just_finished()
-                || bot.target_position.map_or(true, |target| {
-                    current_pos.distance(target) < PLAYER_DEFAULT_RADIUS
-                })
+                || bot
+                    .target_position
+                    .map_or(true, |target| current_pos.distance(target) < PLAYER_DEFAULT_RADIUS)
             {
                 let current_pos = transform.translation.truncate();
                 // Filter nearby orbs based on current bot position

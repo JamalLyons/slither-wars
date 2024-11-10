@@ -4,7 +4,8 @@ use bevy::prelude::*;
 pub struct Leaderboard;
 
 #[derive(Component)]
-pub struct LeaderboardEntry {
+pub struct LeaderboardEntry
+{
     pub name: String,
     pub score: u32,
-} 
+}

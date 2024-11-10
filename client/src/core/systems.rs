@@ -1,14 +1,15 @@
 use std::collections::HashSet;
+
 use bevy::core::FrameCount;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 
+use super::components::*;
 use crate::bot::components::Bot;
 use crate::constants::*;
-use crate::player::components::Player;
-use super::components::*;
 use crate::orb::components::Orb;
+use crate::player::components::Player;
 
 pub fn spawn_game_world(
     mut commands: Commands,
@@ -87,10 +88,7 @@ pub fn check_snake_collisions(
             );
 
             if collision.is_some() {
-                if let Ok((snake_entity, snake, snake_transform)) = snake_query.get(segment.owner) {
-                    // Store the death position before despawning
-                    let death_position = snake_transform.translation;
-
+                if let Ok((snake_entity, snake, _)) = snake_query.get(segment.owner) {
                     // First, despawn all segments
                     for &segment_entity in &snake.segments {
                         commands.entity(segment_entity).despawn_recursive();
@@ -109,18 +107,18 @@ pub fn check_snake_collisions(
                         &mut commands,
                         &mut meshes,
                         &mut materials,
-                        snake_entity,
-                        snake.length,
-                        other_segment.owner,
-                        false,
                         snake.color,
-                        &snake.segments.iter().map(|&segment_entity| {
-                            if let Ok((_, segment, segment_transform)) = segment_query.get(segment_entity) {
-                                segment_transform.translation
-                            } else {
-                                Vec3::new(0.0, 0.0, 0.0)
-                            }
-                        }).collect::<Vec<_>>(),
+                        &snake
+                            .segments
+                            .iter()
+                            .map(|&segment_entity| {
+                                if let Ok((_, _, segment_transform)) = segment_query.get(segment_entity) {
+                                    segment_transform.translation
+                                } else {
+                                    Vec3::new(0.0, 0.0, 0.0)
+                                }
+                            })
+                            .collect::<Vec<_>>(),
                     );
 
                     processed_deaths.insert(snake_entity);
@@ -134,13 +132,10 @@ fn spawn_death_orbs(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
-    dead_entity: Entity,
-    snake_length: u32,
-    killer_entity: Entity,
-    was_player: bool,
     color: Color,
     segment_positions: &[Vec3],
-) {
+)
+{
     // Spawn one orb at each segment position
     for &position in segment_positions {
         commands.spawn((

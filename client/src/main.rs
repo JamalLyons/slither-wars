@@ -3,15 +3,16 @@
 #![allow(unused_variables)]
 
 mod constants;
-mod utils;
 mod core;
+mod utils;
 
 mod bot;
+mod leaderboard;
 mod orb;
 mod player;
-mod leaderboard;
 
 use std::time::Duration;
+
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::window::PresentMode;
@@ -21,7 +22,8 @@ use bevy_dev_tools::fps_overlay::FpsOverlayPlugin;
 use crate::constants::*;
 use crate::core::CorePlugin;
 
-fn main() {
+fn main()
+{
     App::new()
         .insert_resource(WinitSettings {
             focused_mode: bevy::winit::UpdateMode::Continuous,

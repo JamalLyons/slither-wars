@@ -21,7 +21,6 @@ pub const MAX_ORB_SPAWN_COUNT: usize = 5000;
 pub const ORB_SPAWN_PER_PLAYER: usize = 50;
 pub const ORB_SPAWN_INTERVAL: f32 = 0.6; // Orb spawn interval during boosting
 pub const ORB_SPAWN_DISTANCE_MARGIN: f32 = 1.0;
-pub const SCORE_PER_ORB: u32 = 1;
 pub const SCORE_NEEDED_FOR_BOOSTING: u32 = 5;
 
 /// Bot constants
@@ -29,7 +28,6 @@ pub const BOT_SPAWN_INTERVAL: f32 = 0.5;
 pub const BOT_DEFAULT_SPAWN_AMOUNT: usize = 5;
 pub const MAX_BOT_SPAWN_COUNT: usize = 25;
 pub const BOT_SPEED: f32 = 100.0;
-pub const BOT_DIRECTION_CHANGE_CHANCE: f32 = 0.02; // Adjust as needed
 
 /// Radius growth constants
 pub const RADIUS_GROWTH_PER_STAGE: f32 = 2.0; // Amount to increase radius per stage
@@ -66,7 +64,6 @@ pub const Z_PLAYER_SEGMENTS: f32 = 2.0;
 pub const SEGMENT_SIZE: f32 = 20.0;
 pub const ORB_RADIUS: f32 = 5.0;
 pub const ORB_VALUE: u32 = 1;
-pub const Z_ORB_LAYER: f32 = 2.0;
 
 /// Camera zoom constants
 pub const CAMERA_ZOOM_FACTOR: f32 = 0.5; // How much to zoom out per radius increase

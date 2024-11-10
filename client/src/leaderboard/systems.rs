@@ -1,44 +1,47 @@
 use bevy::prelude::*;
-use crate::player::components::Player;
-use crate::bot::components::Bot;
-use super::components::*;
-use crate::constants::*;
 
-pub fn spawn_leaderboard(mut commands: Commands, asset_server: Res<AssetServer>) {
+use super::components::*;
+use crate::bot::components::Bot;
+use crate::constants::*;
+use crate::player::components::Player;
+
+pub fn spawn_leaderboard(mut commands: Commands, asset_server: Res<AssetServer>)
+{
     // Spawn the leaderboard container
-    commands.spawn((
-        Leaderboard,
-        NodeBundle {
-            style: Style {
-                position_type: PositionType::Absolute,
-                right: Val::Px(10.0),
-                top: Val::Px(10.0),
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::FlexEnd,
-                padding: UiRect::all(Val::Px(10.0)),
+    commands
+        .spawn((
+            Leaderboard,
+            NodeBundle {
+                style: Style {
+                    position_type: PositionType::Absolute,
+                    right: Val::Px(10.0),
+                    top: Val::Px(10.0),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::FlexEnd,
+                    padding: UiRect::all(Val::Px(10.0)),
+                    ..default()
+                },
+                background_color: BackgroundColor(BLACK_COLOR),
                 ..default()
             },
-            background_color: BackgroundColor(BLACK_COLOR),
-            ..default()
-        },
-    ))
-    .with_children(|parent| {
-        // Leaderboard title
-        parent.spawn(
-            TextBundle::from_section(
-                "Leaderboard",
-                TextStyle {
-                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                    font_size: 24.0,
-                    color: Color::WHITE,
-                },
-            )
-            .with_style(Style {
-                margin: UiRect::bottom(Val::Px(10.0)),
-                ..default()
-            }),
-        );
-    });
+        ))
+        .with_children(|parent| {
+            // Leaderboard title
+            parent.spawn(
+                TextBundle::from_section(
+                    "Leaderboard",
+                    TextStyle {
+                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                        font_size: 24.0,
+                        color: Color::WHITE,
+                    },
+                )
+                .with_style(Style {
+                    margin: UiRect::bottom(Val::Px(10.0)),
+                    ..default()
+                }),
+            );
+        });
 }
 
 pub fn update_leaderboard(
@@ -47,7 +50,8 @@ pub fn update_leaderboard(
     player_query: Query<(&Player, &Name)>,
     bot_query: Query<&Bot>,
     asset_server: Res<AssetServer>,
-) {
+)
+{
     // Get all scores and names
     let mut scores: Vec<(String, u32)> = Vec::new();
 
@@ -67,7 +71,7 @@ pub fn update_leaderboard(
     // Update the leaderboard UI
     if let Ok(leaderboard_entity) = leaderboard_query.get_single() {
         commands.entity(leaderboard_entity).despawn_descendants();
-        
+
         // Spawn title
         commands.entity(leaderboard_entity).with_children(|parent| {
             parent.spawn(
@@ -104,4 +108,4 @@ pub fn update_leaderboard(
             }
         });
     }
-} 
+}
