@@ -1,6 +1,8 @@
 - make a complex player movement system
 - mini map system for players to see where other snacks are
 - Get/Create real game assets
+- snake body when boosting vs normal is 2 different lengths which does not look good. When a snake is boosting its whole body should move faster
+right now the head moves faster than the body has to catch up to it. which looks weird.
 - improve snake movement system. Right now it's not very smooth and the segments take forever to catch up to the head. It should mimic the original slither.io game movement system.
 - Add game over screen
 - Make the game menu do something useful and customize it
