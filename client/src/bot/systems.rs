@@ -6,10 +6,10 @@ use bevy::sprite::MaterialMesh2dBundle;
 use rand::Rng;
 
 use super::components::Bot;
-use crate::components::{Segment, SegmentPositionHistory, Snake, SnakeSegment};
+use crate::core::components::{Segment, SegmentPositionHistory, Snake, SnakeSegment};
 use crate::constants::*;
 use crate::orb::components::Orb;
-use crate::resources::GlobalGameState;
+use crate::core::resources::GlobalGameState;
 use crate::utils::*;
 
 pub fn spawn_bots(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>, mut global_game_state: ResMut<GlobalGameState>)

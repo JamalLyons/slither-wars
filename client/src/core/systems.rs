@@ -1,15 +1,14 @@
 use std::collections::HashSet;
-
 use bevy::core::FrameCount;
 use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
-use bot::components::Bot;
-use components::{DeadSnake, GameWorld, Segment, Snake, SnakeSegment};
-use orb::components::Orb;
-use player::components::Player;
 
-use crate::*;
+use crate::bot::components::Bot;
+use crate::constants::*;
+use crate::player::components::Player;
+use super::components::*;
+use crate::orb::components::Orb;
 
 pub fn spawn_game_world(
     mut commands: Commands,

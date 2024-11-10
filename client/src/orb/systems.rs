@@ -3,7 +3,7 @@ use bevy::sprite::MaterialMesh2dBundle;
 
 use super::components::Orb;
 use crate::constants::*;
-use crate::resources::*;
+use crate::core::resources::GlobalGameState;
 use crate::utils::*;
 
 pub fn spawn_orbs(

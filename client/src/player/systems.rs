@@ -4,11 +4,11 @@ use bevy::prelude::*;
 use bevy::sprite::MaterialMesh2dBundle;
 
 use super::components::*;
-use crate::components::{Segment, SegmentPositionHistory, Snake, SnakeSegment};
+use crate::core::components::{Segment, SegmentPositionHistory, Snake, SnakeSegment};
 use crate::constants::*;
 use crate::orb::components::Orb;
 use crate::orb::systems::spawn_singlular_orb;
-use crate::resources::GlobalGameState;
+use crate::core::resources::GlobalGameState;
 use crate::utils::*;
 
 pub fn spawn_player(
