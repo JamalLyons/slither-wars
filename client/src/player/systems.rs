@@ -299,22 +299,46 @@ pub fn remove_segment(commands: &mut Commands, snake: &mut Snake, segments_to_re
 /// Updates the player's camera to follow the player in the world
 /// todo - make the player camera zoom start small and scale with the player's radius in the future
 pub fn update_player_camera(
-    mut camera_query: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
-    player_query: Query<&Transform, (With<Player>, Without<Camera2d>)>,
+    mut camera_query: Query<(&mut Transform, &mut OrthographicProjection), (With<Camera2d>, Without<Player>)>,
+    player_query: Query<(&Transform, &Player), (With<Player>, Without<Camera2d>)>,
     time: Res<Time>,
-)
-{
-    let Ok(mut camera) = camera_query.get_single_mut() else {
+) {
+    let Ok((mut camera_transform, mut projection)) = camera_query.get_single_mut() else {
         return;
     };
 
-    let Ok(player) = player_query.get_single() else {
+    let Ok((player_transform, player)) = player_query.get_single() else {
         return;
     };
 
-    let target = Vec3::new(player.translation.x, player.translation.y, camera.translation.z);
+    // Update camera position with lerp
+    let target_pos = Vec3::new(
+        player_transform.translation.x,
+        player_transform.translation.y,
+        camera_transform.translation.z
+    );
+    camera_transform.translation = camera_transform.translation.lerp(target_pos, time.delta_seconds() * CAM_LERP_FACTOR);
 
-    camera.translation = camera.translation.lerp(target, time.delta_seconds() * CAM_LERP_FACTOR);
+    // Calculate desired zoom based on player radius
+    let base_scale = 1.0;
+    let radius_factor = player.radius / PLAYER_DEFAULT_RADIUS;
+    let target_scale = base_scale + (radius_factor - 1.0) * CAMERA_ZOOM_FACTOR;
+    
+    // Clamp the zoom scale between min and max values
+    let target_scale = target_scale.clamp(MIN_CAMERA_ZOOM, MAX_CAMERA_ZOOM);
+
+    // Smoothly interpolate to the target scale
+    let current_scale = projection.scale;
+    projection.scale = lerp(
+        current_scale,
+        target_scale,
+        time.delta_seconds() * CAMERA_ZOOM_LERP_FACTOR
+    );
+}
+
+// Helper function for linear interpolation
+fn lerp(start: f32, end: f32, t: f32) -> f32 {
+    start + (end - start) * t
 }
 
 pub fn spawn_score_text(mut commands: Commands, asset_server: Res<AssetServer>)

@@ -1,5 +1,8 @@
 use bevy::color::Color;
 
+/// Feature flags
+pub const SPAWN_BOTS_ENABLED: bool = false;
+
 /// Player movement and growth constants
 pub const PLAYER_SPEED: f32 = 100.; // Pixels per second
 pub const PLAYER_DEFAULT_RADIUS: f32 = 12.5;
@@ -15,7 +18,7 @@ pub const BOOST_ORB_RADIUS: f32 = 4.0;
 pub const MAX_ORB_SPAWN_COUNT: usize = 5000;
 
 /// Orb spawning and scoring constants
-pub const ORB_SPAWN_PER_PLAYER: usize = 50;
+pub const ORB_SPAWN_PER_PLAYER: usize = 500;
 pub const ORB_SPAWN_INTERVAL: f32 = 0.6; // Orb spawn interval during boosting
 pub const ORB_SPAWN_DISTANCE_MARGIN: f32 = 1.0;
 pub const SCORE_PER_ORB: u32 = 1;
@@ -64,3 +67,9 @@ pub const SEGMENT_SIZE: f32 = 20.0;
 pub const ORB_RADIUS: f32 = 5.0;
 pub const ORB_VALUE: u32 = 1;
 pub const Z_ORB_LAYER: f32 = 2.0;
+
+/// Camera zoom constants
+pub const CAMERA_ZOOM_FACTOR: f32 = 0.5; // How much to zoom out per radius increase
+pub const CAMERA_ZOOM_LERP_FACTOR: f32 = 2.0; // How fast the camera zooms
+pub const MIN_CAMERA_ZOOM: f32 = 0.5; // Maximum zoom in
+pub const MAX_CAMERA_ZOOM: f32 = 3.0; // Maximum zoom out

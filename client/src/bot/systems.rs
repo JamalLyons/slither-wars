@@ -14,6 +14,10 @@ use crate::utils::*;
 
 pub fn spawn_bots(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>, mut global_game_state: ResMut<GlobalGameState>)
 {
+    if !SPAWN_BOTS_ENABLED {
+        return;
+    }
+
     // Spawn initial bots
     for _ in 0..BOT_DEFAULT_SPAWN_AMOUNT {
         let random_position = generate_random_position_within_radius(MAP_RADIUS);
