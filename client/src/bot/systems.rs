@@ -96,22 +96,55 @@ pub fn bot_movement(
     // First, collect orb positions
     let nearby_orbs: Vec<Vec2> = query_set.p2().iter().map(|t| t.translation.truncate()).collect();
 
+    // First, collect all segment positions and their owners into a Vec
+    let segments_data: Vec<(Vec2, Entity)> = query_set.p1()
+        .iter()
+        .map(|(transform, _, snake_segment)| (transform.translation.truncate(), snake_segment.owner))
+        .collect();
+
     // Then update bot positions
     {
         let mut bot_query = query_set.p0();
         for (bot_entity, mut transform, mut bot, mut segment_history) in bot_query.iter_mut() {
             bot.decision_timer.tick(time.delta());
 
+            let current_pos = transform.translation.truncate();
+            
+            // Calculate danger direction using the collected segments
+            let mut danger_direction = Vec2::ZERO;
+            for (segment_pos, owner) in &segments_data {
+                if *owner != bot_entity {
+                    let distance = current_pos.distance(*segment_pos);
+                    let danger_radius = PLAYER_DEFAULT_RADIUS * 3.0;
+                    if distance < danger_radius {
+                        let away_vector = (current_pos - *segment_pos).normalize();
+                        let strength = 1.0 - (distance / danger_radius);
+                        danger_direction += away_vector * strength;
+                    }
+                }
+            }
+
             if bot.decision_timer.just_finished()
                 || bot.target_position.map_or(true, |target| {
-                    transform.translation.truncate().distance(target) < PLAYER_DEFAULT_RADIUS
+                    current_pos.distance(target) < PLAYER_DEFAULT_RADIUS
                 })
             {
                 let current_pos = transform.translation.truncate();
                 // Filter nearby orbs based on current bot position
                 let nearby_orbs: Vec<Vec2> = nearby_orbs
                     .iter()
-                    .filter(|pos| current_pos.distance(**pos) < MAP_RADIUS * 0.5)
+                    .filter(|pos| {
+                        // Only consider orbs that are not too close to other snakes
+                        let is_safe = segments_data.iter().all(|(other_pos, snake_segment_owner)| {
+                            if *snake_segment_owner != bot_entity {
+                                let distance = other_pos.distance(**pos);
+                                distance > PLAYER_DEFAULT_RADIUS * 2.5
+                            } else {
+                                true
+                            }
+                        });
+                        current_pos.distance(**pos) < MAP_RADIUS * 0.5 && is_safe
+                    })
                     .copied()
                     .collect();
 
@@ -137,10 +170,17 @@ pub fn bot_movement(
 
             if let Some(target) = bot.target_position {
                 let current_pos = transform.translation.truncate();
-                let direction = (target - current_pos).normalize();
+                let mut direction = (target - current_pos).normalize();
+
+                // Apply danger avoidance if there are nearby snakes
+                if danger_direction != Vec2::ZERO {
+                    let avoid_weight = 0.8; // Prioritize avoiding collisions
+                    let target_weight = 0.2;
+                    direction = (direction * target_weight + danger_direction * avoid_weight).normalize();
+                }
 
                 let wobble = Vec2::new(rng.gen_range(-0.2..0.2), rng.gen_range(-0.2..0.2));
-                let direction = (direction + wobble * 0.1).normalize();
+                direction = (direction + wobble * 0.1).normalize();
 
                 transform.translation += direction.extend(0.0) * BOT_SPEED * time.delta_seconds();
 
