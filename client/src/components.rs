@@ -57,6 +57,7 @@ pub struct SnakeSegment
 }
 
 #[derive(Component)]
-pub struct DeadSnake {
+pub struct DeadSnake
+{
     pub killer: Entity,
 }

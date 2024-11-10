@@ -58,4 +58,5 @@ pub const Z_PLAYER_SEGMENTS: f32 = 2.0;
 /// Segment size constants
 pub const SEGMENT_SIZE: f32 = 20.0;
 pub const ORB_RADIUS: f32 = 5.0;
+pub const ORB_VALUE: u32 = 1;
 pub const Z_ORB_LAYER: f32 = 2.0;

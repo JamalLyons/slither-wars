@@ -9,9 +9,10 @@ use super::components::Bot;
 use crate::components::{Segment, SegmentPositionHistory, Snake, SnakeSegment};
 use crate::constants::*;
 use crate::orb::components::Orb;
+use crate::resources::GlobalGameState;
 use crate::utils::*;
 
-pub fn spawn_bots(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>)
+pub fn spawn_bots(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut materials: ResMut<Assets<ColorMaterial>>, mut global_game_state: ResMut<GlobalGameState>)
 {
     // Spawn initial bots
     for _ in 0..BOT_DEFAULT_SPAWN_AMOUNT {
@@ -75,6 +76,8 @@ pub fn spawn_bots(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut 
                 color: bot.color,
             });
         }
+
+        global_game_state.total_snakes += 1;
     }
 }
 
@@ -175,7 +178,6 @@ pub fn bot_movement(
         }
     }
 }
-
 
 pub fn bot_eating(
     mut commands: Commands,

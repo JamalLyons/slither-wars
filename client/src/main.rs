@@ -64,6 +64,8 @@ fn main()
             make_window_visible,
             check_snake_collisions,
             cleanup_dead_snakes,
+            orb_collection,
+            update_segment_sizes,
         ))
         .run();
 }

@@ -25,7 +25,7 @@ pub fn spawn_orbs(
             let position = generate_random_position_within_radius(MAP_RADIUS);
             let color = generate_random_color();
 
-            spawn_singlular_orb(&mut commands, &mut meshes, &mut materials, color, position, ORB_RADIUS);
+            spawn_singlular_orb(&mut commands, &mut meshes, &mut materials, color, position, ORB_RADIUS, ORB_VALUE);
         }
     }
 }
@@ -37,11 +37,12 @@ pub fn spawn_singlular_orb(
     color: Color,
     position: Vec2,
     radius: f32,
+    value: u32,
 ) -> Entity
 {
     commands
         .spawn((
-            Orb { radius },
+            Orb { radius, value },
             MaterialMesh2dBundle {
                 mesh: meshes.add(Circle::new(ORB_RADIUS)).into(), // Orbs have a radius of 5.0
                 material: materials.add(ColorMaterial::from(color)),

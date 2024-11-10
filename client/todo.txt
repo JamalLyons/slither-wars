@@ -1,9 +1,11 @@
 - make all player segments grow with score (right now only the head does which is weird lol)
 - make bot radius grow with score
 - make death spawn orbs spawn in the same place as the players segment 
+- make bots avoid other snakes
 - add a leaderboard to view top 10 players and their score (and support bots on there)
-- make a complex movement system
-- mini map system
+- make a complex player movement system
+- mini map system for players to see where other snacks are
+- as a player grows their radius, the camera should zoom out to keep them in view (and zoom in when they shrink)
 - Get/Create real game assets
 - Add game over screen
 - Make the game menu do something useful and customize it

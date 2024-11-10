@@ -159,6 +159,7 @@ pub fn move_player(
                         player.color,
                         orb_position.truncate(),
                         BOOST_ORB_RADIUS,
+                        ORB_VALUE,
                     );
 
                     player.orb_spawn_timer -= ORB_SPAWN_INTERVAL;
@@ -249,7 +250,6 @@ pub fn collect_orb(
         }
     }
 }
-
 
 pub fn add_segment(
     commands: &mut Commands,
