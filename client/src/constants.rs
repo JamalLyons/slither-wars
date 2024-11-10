@@ -1,7 +1,7 @@
 use bevy::color::Color;
 
 /// Feature flags
-pub const SPAWN_BOTS_ENABLED: bool = false;
+pub const SPAWN_BOTS_ENABLED: bool = true;
 
 /// Player movement and growth constants
 pub const PLAYER_SPEED: f32 = 100.; // Pixels per second
@@ -18,7 +18,7 @@ pub const BOOST_ORB_RADIUS: f32 = 4.0;
 pub const MAX_ORB_SPAWN_COUNT: usize = 5000;
 
 /// Orb spawning and scoring constants
-pub const ORB_SPAWN_PER_PLAYER: usize = 500;
+pub const ORB_SPAWN_PER_PLAYER: usize = 50;
 pub const ORB_SPAWN_INTERVAL: f32 = 0.6; // Orb spawn interval during boosting
 pub const ORB_SPAWN_DISTANCE_MARGIN: f32 = 1.0;
 pub const SCORE_PER_ORB: u32 = 1;
@@ -26,7 +26,7 @@ pub const SCORE_NEEDED_FOR_BOOSTING: u32 = 5;
 
 /// Bot constants
 pub const BOT_SPAWN_INTERVAL: f32 = 0.5;
-pub const BOT_DEFAULT_SPAWN_AMOUNT: usize = 3;
+pub const BOT_DEFAULT_SPAWN_AMOUNT: usize = 5;
 pub const MAX_BOT_SPAWN_COUNT: usize = 25;
 pub const BOT_SPEED: f32 = 100.0;
 pub const BOT_DIRECTION_CHANGE_CHANCE: f32 = 0.02; // Adjust as needed
@@ -47,7 +47,7 @@ pub const BLACK_COLOR: Color = Color::srgb(0.0, 0.0, 0.0);
 pub const SCREEN_WIDTH: f32 = 1000.;
 pub const SCREEN_HEIGHT: f32 = 700.;
 
-pub const MAP_RADIUS: f32 = 500.;
+pub const MAP_RADIUS: f32 = 1000.;
 
 /// Camera constants
 pub const CAM_LERP_FACTOR: f32 = 5.;
